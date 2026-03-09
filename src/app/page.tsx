@@ -135,15 +135,15 @@ export default function Home() {
       <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 w-full max-w-lg">
 
         {/* 2. Adicione a Logo aqui */}
-        <div className="flex justify-center mb-4">
-          <Image
-            src="/logo.png" // Nome do arquivo que você salvou na pasta public
-            alt="Logo do Cliente"
-            width={120}  // Ajuste o tamanho conforme necessário
-            height={120}
-            className="rounded-full object-contain"
-          />
-        </div>
+        {config.logo_url && (
+          <div className="flex justify-center mb-4">
+            <img
+              src={config.logo_url}
+              alt="Logo"
+              className="w-24 h-24 rounded-full object-cover shadow-sm"
+            />
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
           {config.nome_barbearia}
         </h1>
