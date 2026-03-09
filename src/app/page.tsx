@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { gerarSlotsDeHorario } from '@/lib/utils'
 import { aplicarMascaraWhatsapp } from '@/lib/utils'
+import Image from 'next/image'
 
 export default function Home() {
   const [config, setConfig] = useState<any>(null)
@@ -132,6 +133,17 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
       <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 w-full max-w-lg">
+
+        {/* 2. Adicione a Logo aqui */}
+        <div className="flex justify-center mb-4">
+          <Image
+            src="/logo.png" // Nome do arquivo que você salvou na pasta public
+            alt="Logo do Cliente"
+            width={120}  // Ajuste o tamanho conforme necessário
+            height={120}
+            className="rounded-full object-contain"
+          />
+        </div>
         <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">
           {config.nome_barbearia}
         </h1>
