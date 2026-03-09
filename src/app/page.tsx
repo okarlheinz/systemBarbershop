@@ -105,21 +105,29 @@ export default function Home() {
   const agora = new Date(
     new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
   )
+  const dataHojeBrasilia = agora.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
 
   const horariosFiltrados = horariosDisponiveis.filter((horario) => {
-
-    if (dataSelecionada !== new Date().toISOString().split('T')[0]) {
-      return true
+    // Se a data selecionada for um dia no futuro, todos os horários estão disponíveis
+    if (dataSelecionada > dataHojeBrasilia) {
+      return true;
     }
 
-    const [hora, minuto] = horario.split(':')
-    const dataHorario = new Date()
-    dataHorario.setHours(Number(hora))
-    dataHorario.setMinutes(Number(minuto))
-    dataHorario.setSeconds(0)
+    // Se a data selecionada for hoje, precisamos comparar as horas
+    if (dataSelecionada === dataHojeBrasilia) {
+      const [hora, minuto] = horario.split(':').map(Number);
 
-    return dataHorario > agora
-  })
+      // Criamos um objeto de data para o horário do slot HOJE
+      const dataSlot = new Date();
+      dataSlot.setHours(hora, minuto, 0, 0);
+
+      // Só mostramos se o horário do slot for maior que o horário de agora
+      return dataSlot > agora;
+    }
+
+    // Se for uma data passada, não mostra nada (segurança extra)
+    return false;
+  });
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
