@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
+  /* Vinculamos as cores do Tailwind às nossas variáveis CSS */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Configuração de Variáveis por Tema */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #3b82f6; /* Azul base */
+}
+
+/* Quando o HTML tiver o atributo data-theme='dark' */
+[data-theme='dark'] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #60a5fa;
+}
+
+/* Quando o HTML tiver o atributo data-theme='rosa' */
+[data-theme='rosa'] {
+  --background: #fff5f7;
+  --foreground: #4a0415;
+  --primary: #f472b6;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Suave ao trocar */
 }
