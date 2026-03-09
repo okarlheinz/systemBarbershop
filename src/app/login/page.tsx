@@ -7,24 +7,38 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [carregando, setCarregando] = useState(false)
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setCarregando(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password
-    })
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setCarregando(true);
 
-    if (error) {
-      alert("Credenciais inválidas: " + error.message)
-      setCarregando(false)
-    } else {
-      // O Middleware detectará a nova sessão e redirecionará automaticamente 
-      // ao tentarmos acessar o /admin ou recarregar
-      window.location.assign('/admin')
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password
+      });
+
+      if (error) {
+        alert("Erro ao entrar: " + error.message);
+        setCarregando(false);
+        return;
+      }
+
+      if (data?.session) {
+        // Força o navegador a recarregar totalmente no painel admin
+        // Isso garante que o middleware perceba o novo cookie de sessão
+        window.location.replace('/admin');
+      } else {
+        setCarregando(false);
+        alert("Não foi possível estabelecer uma sessão.");
+      }
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+      setCarregando(false);
+      alert("Ocorreu um erro inesperado no login.");
     }
   }
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-100 p-6">

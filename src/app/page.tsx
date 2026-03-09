@@ -12,7 +12,11 @@ export default function Home() {
   const [telefone, setTelefone] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [agendamentosDoDia, setAgendamentosDoDia] = useState<string[]>([]);
-  const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().split('T')[0]);
+  const hoje = new Date().toLocaleDateString('sv-SE', {
+    timeZone: 'America/Sao_Paulo'
+  })
+
+  const [dataSelecionada, setDataSelecionada] = useState(hoje)
 
   async function confirmarAgendamento() {
     if (!nome || !telefone || !horarioSelecionado) {
@@ -22,7 +26,8 @@ export default function Home() {
 
     setEnviando(true);
 
-    const dataLocalIso = `${dataSelecionada}T${horarioSelecionado}:00`;
+    const dataLocal = new Date(`${dataSelecionada}T${horarioSelecionado}:00`)
+    const dataLocalIso = dataLocal.toISOString()
 
     const telefoneLimpo = telefone.replace(/\D/g, ''); // Remove ( ) - e espaços
 
@@ -37,6 +42,13 @@ export default function Home() {
     setEnviando(false);
 
     if (error) {
+
+      if (error.code === "23505") {
+        alert("Esse horário acabou de ser reservado por outra pessoa. Escolha outro.");
+        window.location.reload();
+        return;
+      }
+
       alert("Erro ao agendar: " + error.message);
     } else {
       alert("Agendamento realizado com sucesso!");
@@ -64,8 +76,16 @@ export default function Home() {
 
       if (agendamentosData) {
         const horasOcupadas = agendamentosData.map(a => {
-          return a.data_hora.split('T')[1].slice(0, 5);
-        });
+
+          const data = new Date(a.data_hora)
+
+          return data.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'America/Sao_Paulo'
+          })
+
+        })
         setAgendamentosDoDia(horasOcupadas);
       }
     }
@@ -82,6 +102,25 @@ export default function Home() {
     config.intervalo_minutos
   );
 
+  const agora = new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
+  )
+
+  const horariosFiltrados = horariosDisponiveis.filter((horario) => {
+
+    if (dataSelecionada !== new Date().toISOString().split('T')[0]) {
+      return true
+    }
+
+    const [hora, minuto] = horario.split(':')
+    const dataHorario = new Date()
+    dataHorario.setHours(Number(hora))
+    dataHorario.setMinutes(Number(minuto))
+    dataHorario.setSeconds(0)
+
+    return dataHorario > agora
+  })
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
       <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 w-full max-w-lg">
@@ -97,7 +136,9 @@ export default function Home() {
           <input
             type="date"
             value={dataSelecionada}
-            min={new Date().toISOString().split('T')[0]} // Impede agendar no passado
+            min={new Date().toLocaleDateString('sv-SE', {
+              timeZone: 'America/Sao_Paulo'
+            })}
             onChange={(e) => setDataSelecionada(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded text-black focus:ring-2 focus:ring-black outline-none"
           />
@@ -106,7 +147,7 @@ export default function Home() {
         {/* Aqui é onde a mágica acontece: o Grid de horários */}
 
         <div className="grid grid-cols-3 gap-3">
-          {horariosDisponiveis.map((horario) => {
+          {horariosFiltrados.map((horario) => {
             const estaOcupado = agendamentosDoDia.includes(horario);
 
             return (
