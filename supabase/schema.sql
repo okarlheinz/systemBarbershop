@@ -51,3 +51,8 @@ ADD COLUMN IF NOT EXISTS dias_trabalho JSONB DEFAULT '["segunda", "terca", "quar
 -- Comentário de segurança para garantir acesso público à leitura das configs (necessário para o Login e Home)
 CREATE POLICY "Permitir leitura pública de configurações" 
 ON configuracoes FOR SELECT USING (true);
+
+-- Índices para acelerar o Dashboard Analítico
+CREATE INDEX IF NOT EXISTS idx_agendamentos_status_data ON agendamentos(status, data_hora);
+CREATE INDEX IF NOT EXISTS idx_agendamentos_cliente_id ON agendamentos(cliente_id);
+
