@@ -37,3 +37,28 @@ export function aplicarMascaraWhatsapp(valor: string): string {
     .replace(/^(\d{2})(\d)/g, '($1) $2')
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
+
+async function enviarEmailNotificacao(dados: { nome: string, horario: string, data: string }) {
+  // Exemplo usando uma API simples de e-mail (Resend/SendGrid)
+  // Você precisará de uma API Key gratuita
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer YOUR_RESEND_API_KEY`,
+    },
+    body: JSON.stringify({
+      from: 'Agendei.vc <notificacao@coderx.com.br>',
+      to: ['email_do_dono@exemplo.com'], // O e-mail do seu cliente
+      subject: `🔔 Novo Agendamento: ${dados.nome}`,
+      html: `
+        <h1>Novo Horário Marcado!</h1>
+        <p><strong>Cliente:</strong> ${dados.nome}</p>
+        <p><strong>Data:</strong> ${dados.data}</p>
+        <p><strong>Horário:</strong> ${dados.horario}</p>
+        <br>
+        <p>Verifique o painel administrativo para mais detalhes.</p>
+      `,
+    }),
+  });
+}
