@@ -142,8 +142,9 @@ export default function Configuracoes() {
                         />
                     </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
+                        {/* Substituímos grid-cols-2 por flex flex-col (um em cima do outro) e sm:flex-row (lado a lado no PC) */}
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1">
                                 <label className="block text-sm font-bold text-foreground mb-2">Abertura</label>
                                 <input
                                     type="time"
@@ -152,7 +153,8 @@ export default function Configuracoes() {
                                     className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                                 />
                             </div>
-                            <div>
+
+                            <div className="flex-1">
                                 <label className="block text-sm font-bold text-foreground mb-2">Fechamento</label>
                                 <input
                                     type="time"

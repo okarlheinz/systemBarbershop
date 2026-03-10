@@ -12,12 +12,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-:root {
-  /* Tema Light - Agora com um rosa bem sutil no fundo */
+:root, [data-theme='light']{  
+  /* Tema Light */
   --background: #fff; 
   --foreground: #5b5b5b;
   --primary: #262626;
-  --card: #fcfcfc; /* Cards brancos para destacar no fundo rosa */
+  --card: #fcfcfc; 
   --border: #d6d6d6;
   --hover: #878787;
 }

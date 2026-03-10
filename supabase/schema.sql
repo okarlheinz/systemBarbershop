@@ -42,3 +42,6 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON agendamentos(data_hora);
 INSERT INTO configuracoes (nome_barbearia, horario_abertura, horario_fechamento, intervalo_minutos)
 VALUES ('BarberShop CoderX', '08:00', '19:00', 30)
 ON CONFLICT DO NOTHING;
+
+-- 6. COLOCAR TEMA PADRAO
+ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS tema TEXT DEFAULT 'rosa';
