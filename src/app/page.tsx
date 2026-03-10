@@ -147,7 +147,7 @@ export default function Home() {
                       'bg-background text-foreground border-border hover:border-primary'
                     }`}
                   >
-                    {estaOcupado ? 'Vendido' : horario}
+                    {estaOcupado ? 'Ocupado' : horario}
                   </button>
                 );
               })}
