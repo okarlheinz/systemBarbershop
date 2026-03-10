@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON agendamentos(data_hora);
 
 -- 5. INSERÇÃO INICIAL DE CONFIGURAÇÃO
 INSERT INTO configuracoes (nome_barbearia, horario_abertura, horario_fechamento, intervalo_minutos)
-VALUES ('BarberShop CoderX', '08:00', '19:00', 30)
+VALUES ('Minha Empresa - Agendei.vc', '08:00', '19:00', 30)
 ON CONFLICT DO NOTHING;
 
 -- Atualização da tabela de configurações para o ecossistema Agendei.vc
@@ -56,3 +56,8 @@ ON configuracoes FOR SELECT USING (true);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_status_data ON agendamentos(status, data_hora);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_cliente_id ON agendamentos(cliente_id);
 
+-- Adiciona suporte para notificações por e-mail
+ALTER TABLE configuracoes 
+ADD COLUMN IF NOT EXISTS email_notificacao TEXT;
+
+-- Comentário: O e-mail cadastrado aqui receberá alertas automáticos de novos agendamentos.

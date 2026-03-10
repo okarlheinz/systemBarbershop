@@ -31,5 +31,9 @@ O **Agendei.vc** é um software de agendamento "White Label" projetado para ser 
 - Supabase (Auth & Database)
 - Tailwind CSS (Temas Dinâmicos)
 
+## 📦 Dependências Adicionais
+- `lucide-react` (Ícones do Dashboard)
+- `resend` (Opcional - para disparos de e-mail)
+
 ---
 *Desenvolvido por CoderX - 2026*
