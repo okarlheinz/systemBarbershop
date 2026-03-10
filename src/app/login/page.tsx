@@ -10,7 +10,6 @@ export default function Login() {
 
   useEffect(() => {
     async function carregarConfig() {
-      // Busca nome, logo e tema do banco de dados
       const { data } = await supabase
         .from('configuracoes')
         .select('nome_barbearia, logo_url, tema')
@@ -18,7 +17,6 @@ export default function Login() {
       
       if (data) {
         setConfig(data)
-        // Aplica o tema (ex: 'rosa', 'dark' ou 'light') ao carregar a página
         const temaDefinido = data.tema || 'light'
         document.documentElement.setAttribute('data-theme', temaDefinido)
       }
@@ -56,7 +54,7 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-card p-6 transition-colors duration-300">
+    <main className="flex min-h-screen items-center justify-center bg-card p-6 transition-colors duration-300 relative">
       <form onSubmit={handleLogin} className="bg-background p-8 rounded-xl shadow-lg w-full max-w-sm border border-border">
         
         {/* Logo e Nome Dinâmicos */}
@@ -99,6 +97,14 @@ export default function Login() {
           </button>
         </div>
       </form>
+
+      {/* Rodapé Discreto no Canto Esquerdo */}
+      <div className="fixed bottom-6 left-6 opacity-60 hover:opacity-100 transition-opacity hidden md:block">
+        <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">
+          Agendei.vc
+        </h2>
+        <p className="text-[10px] text-gray-400 font-bold -mt-1">POWERED BY CODERX</p>
+      </div>
     </main>
   )
 }

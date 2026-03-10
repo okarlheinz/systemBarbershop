@@ -78,7 +78,7 @@ export function Sidebar() {
               )}
             </div>
             <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">
-              BarberSoft
+              Agendei.vc
             </h2>
             <p className="text-[10px] text-gray-400 font-bold -mt-1">POWERED BY CODERX</p>
           </div>
