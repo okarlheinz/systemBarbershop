@@ -1,0 +1,82 @@
+1. Criar uma Nova Organização ou Projeto no Supabase
+Não use o mesmo projeto de desenvolvimento. Para cada cliente (ou para a versão "Produção"), crie um novo projeto no Supabase. Isso garante que:
+
+Os agendamentos do Cliente A nunca apareçam no Dashboard do Cliente B.
+
+As logos e configurações sejam totalmente independentes.
+
+2. Replicar o Banco de Dados (O "Coração")
+Com o novo projeto criado, você usará o seu arquivo schema.sql atualizado.
+
+No painel do novo projeto Supabase, vá em SQL Editor.
+
+Crie uma New Query.
+
+Cole o conteúdo completo do seu schema.sql (aquele que já contém a tabela de clientes, status e índices).
+
+Clique em Run.
+
+3. Configurar o Storage (Logos)
+Lembre-se que o banco de dados não guarda a imagem, apenas o link.
+
+Vá em Storage no novo Supabase.
+
+Crie o bucket logos como Público.
+
+Configure as Policies (Políticas) para permitir que o dono da barbearia faça upload da logo dele.
+
+4. Isolamento no Código (.env)
+Você não precisa criar um código novo, apenas uma instância nova.
+
+Se você for hospedar na Vercel, crie um novo projeto lá apontando para o mesmo repositório do GitHub.
+
+Nas Environment Variables (Variáveis de Ambiente) desse novo projeto na Vercel, coloque a SUPABASE_URL e a SUPABASE_ANON_KEY do novo projeto do seu cliente.
+
+5. Checklist de Entrega para o Cliente
+Para vender um serviço "Arretado", entregue o sistema limpo:
+
+Limpeza de Testes: O schema.sql já faz um insert inicial em configuracoes. Edite essa linha no SQL ou use a tela de /admin/configuracao para colocar o nome real da barbearia dele.
+
+Domínio: Se possível, configure um domínio personalizado (ex: barbeariadopedro.com.br) na Vercel para dar mais credibilidade.
+
+💡 Dica de Negócio:
+Como você agora tem um schema.sql sólido, você pode vender o sistema no modelo SaaS (Software as a Service). Você cobra uma taxa de instalação (pelo setup que acabamos de descrever) e uma mensalidade para manter o servidor e o suporte ativos.
+
+
+1. Política de Leitura (Pública)
+Essa política é essencial para que a logo apareça no site para os clientes.
+
+Policy name: "Permitir leitura pública"
+
+Allowed operation: Selecione apenas SELECT.
+
+Target roles: Marque public.
+
+Policy definition: bucket_id = 'logos'.
+
+2. Política de Upload (Inserção)
+Para permitir que o dono da barbearia envie a imagem pela tela de configuração.
+
+Policy name: "Permitir upload para autenticados"
+
+Allowed operation: Selecione INSERT.
+
+Target roles: Marque authenticated.
+
+Policy definition: bucket_id = 'logos'.
+
+3. Política de Atualização (Substituir logo)
+Caso ele queira trocar a logo antiga por uma nova com o mesmo nome.
+
+Policy name: "Permitir atualização para autenticados"
+
+Allowed operation: Selecione UPDATE.
+
+Target roles: Marque authenticated.
+
+Policy definition: bucket_id = 'logos'.
+
+💡 Dica Arretada para Segurança
+Se você quiser que apenas você ou o dono da conta consiga deletar arquivos para evitar acidentes, não crie uma política para a operação DELETE. Assim, se alguém tentar apagar a logo pelo código sem autorização, o Supabase bloqueará a ação.
+
+Após preencher essas três, o seu BarberSoft estará pronto para carregar e exibir as logos conforme o tema escolhido (como o rosa que ficou excelente no seu dashboard).
