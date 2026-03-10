@@ -13,8 +13,7 @@ export default function Configuracoes() {
         horario_abertura: '',
         horario_fechamento: '',
         intervalo_minutos: 30,
-        logo_url: '',
-        tema: 'light' // Adicionado ao estado do formulário
+        logo_url: ''
     })
     const [uploading, setUploading] = useState(false)
     const { theme, setTheme } = useTheme();
@@ -32,19 +31,22 @@ export default function Configuracoes() {
 
             const file = e.target.files[0]
             const fileExt = file.name.split('.').pop()
-            const fileName = `${Math.random()}.${fileExt}`
+            const fileName = `${Math.random()}.${fileExt}` // Nome aleatório para evitar cache
             const filePath = `${fileName}`
 
+            // 1. Upload para o Storage
             const { error: uploadError } = await supabase.storage
                 .from('logos')
                 .upload(filePath, file)
 
             if (uploadError) throw uploadError
 
+            // 2. Gerar URL Pública
             const { data: { publicUrl } } = supabase.storage
                 .from('logos')
                 .getPublicUrl(filePath)
 
+            // 3. Atualizar o estado do formulário
             setForm({ ...form, logo_url: publicUrl })
             alert("Logo carregada! Não esqueça de salvar as alterações.")
 
@@ -55,6 +57,7 @@ export default function Configuracoes() {
         }
     }
 
+
     useEffect(() => {
         async function carregarConfig() {
             const { data } = await supabase.from('configuracoes').select('*').single()
@@ -64,49 +67,36 @@ export default function Configuracoes() {
                     horario_abertura: data.horario_abertura,
                     horario_fechamento: data.horario_fechamento,
                     intervalo_minutos: data.intervalo_minutos,
-                    logo_url: data.logo_url,
-                    tema: data.tema || 'light'
+                    logo_url: data.logo_url
                 })
-                if (data.tema) setTheme(data.tema)
             }
             setLoading(false)
         }
         carregarConfig()
-    }, [setTheme])
+    }, [])
 
     async function salvar(e: React.FormEvent) {
         e.preventDefault()
         setSalvando(true)
-        
-        // Buscamos o ID primeiro para garantir o update correto
-        const { data: configAtual } = await supabase.from('configuracoes').select('id').single()
-
         const { error } = await supabase
             .from('configuracoes')
-                .update({
-                ...form,
-                tema: theme // Garante que o tema selecionado no contexto seja salvo
-            })
-            .eq('id', configAtual?.id)
+            .update(form)
+            .eq('id', (await supabase.from('configuracoes').select('id').single()).data?.id)
 
         setSalvando(false)
-        if (!error) {
-            alert("Configurações salvas com sucesso!")
-        } else {
-            alert("Erro ao salvar configurações.")
-        }
+        if (!error) alert("Configurações salvas com sucesso!")
     }
 
-    if (loading) return <div className="p-10 text-foreground">Carregando...</div>
+    if (loading) return <div className="p-10">Carregando...</div>
 
     return (
         <div className="flex bg-card min-h-screen">
             <Sidebar />
-            <main className="flex-1 lg:ml-64 p-4 md:p-8">
+            <main className="flex-1 lg:ml-64 p-8">
                 <div className="max-w-2xl mx-auto">
-                    <h1 className="text-2xl md:text-3xl font-black mb-8 text-foreground text-center md:text-left">Configuração do Sistema</h1>
+                    <h1 className="text-3xl font-black mb-8 text-foreground">Configuração do Sistema</h1>
 
-                    <form onSubmit={salvar} className="bg-background p-6 md:p-8 rounded-2xl shadow-sm border border-border space-y-6">
+                    <form onSubmit={salvar} className="bg-background p-8 rounded-2xl shadow-sm border border-border space-y-6">                        <div>
                         <div className="flex flex-col items-center mb-6">
                             <label className="block text-sm font-bold text-foreground mb-4 text-center w-full">Logo da Barbearia</label>
                             <div className="relative group w-32 h-32 bg-gray-100 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-black transition-colors">
@@ -125,51 +115,50 @@ export default function Configuracoes() {
                             </div>
                             <p className="text-xs text-gray-400 mt-2">{uploading ? 'Enviando...' : 'Clique para trocar a imagem'}</p>
 
-                            <div className="mt-6 flex flex-col items-center">
-                                <label className="text-sm font-medium mb-3 block text-foreground">Tema do Sistema</label>
+                            {/* ESCOLHA DE TEMA */}
+                            <div className="mt-6">
+                                <label className="text-sm font-medium mb-2 block text-foreground">Tema do Sistema</label>
                                 <div className="flex gap-4">
                                     {temas.map((t) => (
                                         <button
                                             key={t.id}
                                             type="button"
                                             onClick={() => setTheme(t.id)}
-                                            className={`w-10 h-10 rounded-full border-2 transition-all ${t.cor} ${theme === t.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70'}`}
+                                            className={`w-8 h-8 rounded-full border-2 transition-all ${t.cor} ${theme === t.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : ''
+                                                }`}
                                             title={t.id}
                                         />
                                     ))}
                                 </div>
                             </div>
+                            {/* FIM DA ESCOLHA DE TEMA */}
                         </div>
+                        <label className="block text-sm font-bold text-foreground mb-2">Nome da Barbearia</label>
+                        <input
+                            type="text"
+                            value={form.nome_barbearia}
+                            onChange={e => setForm({ ...form, nome_barbearia: e.target.value })}
+                            className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-foreground mb-2">Nome da Barbearia</label>
-                            <input
-                                type="text"
-                                value={form.nome_barbearia}
-                                onChange={e => setForm({ ...form, nome_barbearia: e.target.value })}
-                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
-                            />
-                        </div>
-
-                        {/* Ajuste de responsividade e altura fixa para igualar os inputs */}
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className="w-full">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-sm font-bold text-foreground mb-2">Abertura</label>
                                 <input
                                     type="time"
                                     value={form.horario_abertura}
                                     onChange={e => setForm({ ...form, horario_abertura: e.target.value })}
-                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
+                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                                 />
                             </div>
-
-                            <div className="w-full">
+                            <div>
                                 <label className="block text-sm font-bold text-foreground mb-2">Fechamento</label>
                                 <input
                                     type="time"
                                     value={form.horario_fechamento}
                                     onChange={e => setForm({ ...form, horario_fechamento: e.target.value })}
-                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
+                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                                 />
                             </div>
                         </div>
@@ -179,7 +168,7 @@ export default function Configuracoes() {
                             <select
                                 value={form.intervalo_minutos}
                                 onChange={e => setForm({ ...form, intervalo_minutos: Number(e.target.value) })}
-                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px] appearance-none"
+                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                             >
                                 <option value={15}>15 minutos</option>
                                 <option value={30}>30 minutos</option>
@@ -190,7 +179,7 @@ export default function Configuracoes() {
 
                         <button
                             disabled={salvando}
-                            className="w-full bg-foreground text-white p-4 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:bg-gray-400 mt-4 h-[60px]"
+                            className="w-full bg-foreground text-white p-4 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:bg-gray-400"
                         >
                             {salvando ? "Salvando..." : "Salvar Alterações"}
                         </button>
