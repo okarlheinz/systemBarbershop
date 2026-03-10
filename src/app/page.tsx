@@ -27,37 +27,52 @@ export default function Home() {
 
     setEnviando(true);
 
-    const dataLocal = new Date(`${dataSelecionada}T${horarioSelecionado}:00`)
-    const dataLocalIso = dataLocal.toISOString()
+    try {
+      const dataLocal = new Date(`${dataSelecionada}T${horarioSelecionado}:00`)
+      const dataLocalIso = dataLocal.toISOString()
+      const telefoneLimpo = telefone.replace(/\D/g, '');
 
-    const telefoneLimpo = telefone.replace(/\D/g, ''); // Remove ( ) - e espaços
+      // 1. Lógica de Cliente (Upsert): Busca pelo telefone, insere ou atualiza o nome
+      const { data: cliente, error: errorCliente } = await supabase
+        .from('clientes')
+        .upsert(
+          { nome: nome, telefone: telefoneLimpo },
+          { onConflict: 'telefone' }
+        )
+        .select()
+        .single();
 
-    const { error } = await supabase
-      .from('agendamentos')
-      .insert([{
-        nome_cliente: nome,
-        telefone_cliente: telefoneLimpo, // Salva apenas os 11 números
-        data_hora: dataLocalIso
-      }]);
+      if (errorCliente) throw errorCliente;
 
-    setEnviando(false);
+      // 2. Lógica de Agendamento: Vincula ao ID do cliente encontrado/criado
+      const { error: errorAgendamento } = await supabase
+        .from('agendamentos')
+        .insert([{
+          cliente_id: cliente.id, // Vínculo importante para os relatórios
+          nome_cliente: nome,
+          telefone_cliente: telefoneLimpo,
+          data_hora: dataLocalIso
+        }]);
 
-    if (error) {
-
-      if (error.code === "23505") {
-        alert("Esse horário acabou de ser reservado por outra pessoa. Escolha outro.");
-        window.location.reload();
-        return;
+      if (errorAgendamento) {
+        if (errorAgendamento.code === "23505") {
+          alert("Esse horário acabou de ser reservado por outra pessoa.");
+          window.location.reload();
+          return;
+        }
+        throw errorAgendamento;
       }
 
-      alert("Erro ao agendar: " + error.message);
-    } else {
       alert("Agendamento realizado com sucesso!");
       setNome('');
       setTelefone('');
       setHorarioSelecionado(null);
-      // Recarregar a página ou os dados aqui seria ideal
       window.location.reload();
+
+    } catch (error: any) {
+      alert("Erro ao processar: " + error.message);
+    } finally {
+      setEnviando(false);
     }
   }
 
@@ -74,6 +89,7 @@ export default function Home() {
         .select('data_hora')
         .filter('data_hora', 'gte', `${dataSelecionada}T00:00:00Z`)
         .filter('data_hora', 'lte', `${dataSelecionada}T23:59:59Z`);
+      // Não precisa mais do .neq('status', 'cancelado') porque eles serão deletados
 
       if (agendamentosData) {
         const horasOcupadas = agendamentosData.map(a => {

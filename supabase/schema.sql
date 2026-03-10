@@ -28,3 +28,20 @@ CREATE TABLE IF NOT EXISTS agendamentos (
 INSERT INTO configuracoes (nome_barbearia, horario_abertura, horario_fechamento, intervalo_minutos)
 VALUES ('Minha Barbearia', '08:00', '19:00', 30)
 ON CONFLICT DO NOTHING;
+
+-- 4. Criar a tabela de clientes
+CREATE TABLE IF NOT EXISTS clientes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nome TEXT NOT NULL,
+  telefone TEXT UNIQUE NOT NULL, -- O telefone será nossa chave de busca
+  criado_em TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 5. Adicionar uma coluna de referência na tabela de agendamentos (opcional, mas recomendado para relatórios)
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS cliente_id UUID REFERENCES clientes(id);
+
+-- 6. Adiciona a coluna status com o valor padrão 'pendente'
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pendente';
+
+-- 7. Criar um índice para deixar o dashboard mais rápido
+CREATE INDEX IF NOT EXISTS idx_agendamentos_status ON agendamentos(status);

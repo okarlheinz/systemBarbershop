@@ -37,15 +37,41 @@ export default function Admin() {
     const { data } = await supabase
       .from('agendamentos')
       .select('*')
+      .eq('status', 'pendente') // Adicione esta linha
       .order('data_hora', { ascending: true })
+
     if (data) setAgendamentos(data)
   }
 
+  // Altere a função finalizar para dar UPDATE em vez de DELETE
   async function finalizar(id: string) {
     if (!confirm("Confirmar conclusão do atendimento?")) return
-    const { error } = await supabase.from('agendamentos').delete().eq('id', id)
+    const { error } = await supabase
+      .from('agendamentos')
+      .update({ status: 'concluido' })
+      .eq('id', id)
+
     if (!error) setAgendamentos(prev => prev.filter(a => a.id !== id))
   }
+
+  // Crie a função remover para marcar como cancelado
+  async function remover(id: string) {
+    if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
+
+    // Mudamos de .update para .delete() para liberar a constraint de unicidade
+    const { error } = await supabase
+      .from('agendamentos')
+      .delete()
+      .eq('id', id)
+
+    if (!error) {
+      setAgendamentos(prev => prev.filter(a => a.id !== id))
+    } else {
+      alert("Erro ao remover: " + error.message)
+    }
+  }
+
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -119,13 +145,22 @@ export default function Admin() {
                         <p className="text-xl font-black text-foreground">{hora}</p>
                       </div>
 
-                      <button
-                        onClick={() => finalizar(ag.id)}
-                        className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 transition-all shadow-sm active:scale-95"
-                        title="Finalizar atendimento"
-                      >
-                        Concluir
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => remover(ag.id)}
+                          className="bg-red-500 text-white px-3 py-2 rounded-xl font-bold hover:bg-red-600 transition-all shadow-sm"
+                          title="Remover/Cancelar"
+                        >
+                          Remover
+                        </button>
+                        <button
+                          onClick={() => finalizar(ag.id)}
+                          className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 transition-all shadow-sm"
+                          title="Concluir atendimento"
+                        >
+                          Concluir
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )
