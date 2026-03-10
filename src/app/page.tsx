@@ -16,8 +16,26 @@ export default function Home() {
   const hoje = new Date().toLocaleDateString('sv-SE', {
     timeZone: 'America/Sao_Paulo'
   })
-
   const [dataSelecionada, setDataSelecionada] = useState(hoje)
+
+  useEffect(() => {
+    const telefoneLimpo = telefone.replace(/\D/g, '');
+
+    if (telefoneLimpo.length === 11) {
+      const buscarCliente = async () => {
+        const { data, error } = await supabase
+          .from('clientes')
+          .select('nome')
+          .eq('telefone', telefoneLimpo)
+          .single();
+
+        if (data && !nome) { // Só preenche se o campo nome estiver vazio
+          setNome(data.nome);
+        }
+      };
+      buscarCliente();
+    }
+  }, [telefone]);
 
   async function confirmarAgendamento() {
     if (!nome || !telefone || !horarioSelecionado) {
@@ -209,29 +227,29 @@ export default function Home() {
             <h3 className="font-bold mb-4 text-center text-foreground">Finalizar para às {horarioSelecionado}</h3>
 
             <div className="space-y-4">
+              {/* WhatsApp Primeiro */}
+              <input
+                type="tel" // Melhora semântica para telefone
+                inputMode="numeric" // FORÇA O TECLADO NUMÉRICO NO MOBILE
+                placeholder="Seu WhatsApp (apenas números)"
+                className="w-full p-2 bg-white border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                value={telefone}
+                onChange={(e) => setTelefone(aplicarMascaraWhatsapp(e.target.value))}
+              />
+
+              {/* Nome Segundo */}
               <input
                 type="text"
                 placeholder="Seu nome"
-                // Adicionamos 'text-foreground' para o texto aparecer e 'placeholder:text-gray-400' para a dica
-                className="w-full p-2 border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full p-2 bg-white border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
-              <input
-                type="text"
-                placeholder="Seu WhatsApp (apenas números)"
-                className="w-full p-2 border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
-                value={telefone}
-                onChange={(e) => {
-                  // Importe a função 'aplicarMascaraWhatsapp' de '@/lib/utils' se necessário
-                  const valorFormatado = aplicarMascaraWhatsapp(e.target.value);
-                  setTelefone(valorFormatado);
-                }}
-              />
+
               <button
                 onClick={confirmarAgendamento}
                 disabled={enviando}
-                className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 disabled:bg-gray-400"
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 border-2 border-white transition-all shadow-md"
               >
                 {enviando ? 'Processando...' : 'Confirmar Agendamento'}
               </button>
