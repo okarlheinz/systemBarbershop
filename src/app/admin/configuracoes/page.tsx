@@ -86,7 +86,7 @@ export default function Configuracoes() {
     }
 
     // Classe padrão para todos os inputs ficarem iguais
-    const inputStyle = "w-full bg-white px-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px] flex items-center";
+    const inputStyle = "w-full bg-white px-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px] leading-[50px] appearance-none m-0";
 
     if (loading) return <div className="p-10 text-foreground">Carregando...</div>
 
@@ -98,7 +98,7 @@ export default function Configuracoes() {
                     <h1 className="text-2xl md:text-3xl font-black mb-8 text-foreground text-center md:text-left">Configuração do Sistema</h1>
 
                     <form onSubmit={salvar} className="bg-background p-6 md:p-8 rounded-2xl shadow-sm border border-border space-y-6">
-                        
+
                         <div className="flex flex-col items-center mb-6">
                             <label className="block text-sm font-bold text-foreground mb-4 text-center w-full">Logo da Empresa</label>
                             <div className="relative group w-32 h-32 bg-gray-100 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-black transition-colors">
@@ -134,7 +134,8 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_abertura}
                                     onChange={e => setForm({ ...form, horario_abertura: e.target.value })}
-                                    className={`${inputStyle} py-0`} 
+                                    className={`${inputStyle} py-0 min-h-[50px] max-h-[50px]`}
+                                    style={{ height: '50px' }} // Reforço inline para garantir em todos os browsers
                                 />
                             </div>
                             <div className="w-full">
@@ -143,7 +144,8 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_fechamento}
                                     onChange={e => setForm({ ...form, horario_fechamento: e.target.value })}
-                                    className={`${inputStyle} py-0`}
+                                    className={`${inputStyle} py-0 min-h-[50px] max-h-[50px]`}
+                                    style={{ height: '50px' }}
                                 />
                             </div>
                         </div>
