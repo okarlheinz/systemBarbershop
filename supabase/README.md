@@ -16,5 +16,20 @@
   - **Remover**: Elimina o agendamento e liberta o horário imediatamente para o site.
 - **Temas Dinâmicos**: Suporte total a temas Light, Dark e Rosa (Pink) em todas as telas administrativas.
 
+# 🚀 Agendei.vc - Powered by CoderX
+
+O **Agendei.vc** é um software de agendamento "White Label" projetado para ser adaptável a qualquer modelo de negócio (Barbearias, Clínicas, Consultórios, etc).
+
+## ✨ Novidades desta Versão
+- **Rebranding Total**: Transição de BarberSoft para Agendei.vc.
+- **Dynamic Theming**: O administrador escolhe a cor do sistema (Light, Dark, Rosa) e a interface do cliente se adapta automaticamente.
+- **Controle de Calendário**: Possibilidade de definir dias da semana em que a empresa não atende, bloqueando agendamentos nessas datas.
+- **Identidade Visual**: Logo e Nome da empresa carregados dinamicamente em todas as telas, incluindo Login.
+
+## 🛠️ Tecnologias
+- Next.js 14
+- Supabase (Auth & Database)
+- Tailwind CSS (Temas Dinâmicos)
+
 ---
 *Desenvolvido por CoderX - 2026*

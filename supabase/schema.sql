@@ -43,10 +43,11 @@ INSERT INTO configuracoes (nome_barbearia, horario_abertura, horario_fechamento,
 VALUES ('BarberShop CoderX', '08:00', '19:00', 30)
 ON CONFLICT DO NOTHING;
 
--- 6. COLOCAR TEMA PADRAO
-ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS tema TEXT DEFAULT 'rosa';
+-- Atualização da tabela de configurações para o ecossistema Agendei.vc
+ALTER TABLE configuracoes 
+ADD COLUMN IF NOT EXISTS tema TEXT DEFAULT 'light',
+ADD COLUMN IF NOT EXISTS dias_trabalho JSONB DEFAULT '["segunda", "terca", "quarta", "quinta", "sexta"]';
 
--- 7. LEITURA NA TABELA CONFIGURACAO
-
+-- Comentário de segurança para garantir acesso público à leitura das configs (necessário para o Login e Home)
 CREATE POLICY "Permitir leitura pública de configurações" 
 ON configuracoes FOR SELECT USING (true);
