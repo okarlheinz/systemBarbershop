@@ -131,10 +131,10 @@ export default function Home() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 w-full max-w-lg">
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-card">
+      <div className="bg-background p-8 rounded-xl shadow-md border border-gray-200 w-full max-w-lg">
 
-        {/* 2. Adicione a Logo aqui */}
+        {/* Logo */}
         {config.logo_url && (
           <div className="flex justify-center mb-4">
             <img
@@ -150,7 +150,7 @@ export default function Home() {
         <p className="text-center text-gray-500 mb-6">Selecione um horário para hoje</p>
 
         <div className="mb-6">
-          <label className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Escolha o dia:
           </label>
           <input
@@ -160,7 +160,7 @@ export default function Home() {
               timeZone: 'America/Sao_Paulo'
             })}
             onChange={(e) => setDataSelecionada(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded text-black focus:ring-2 focus:ring-black outline-none"
+            className="w-full bg-white p-2 border border-gray-300 rounded text-foreground focus:ring-2 focus:ring-black outline-none"
           />
         </div>
 
@@ -174,11 +174,11 @@ export default function Home() {
               <button
                 key={horario}
                 disabled={estaOcupado}
-                className={`py-2 rounded-md font-medium transition-all border text-black ${estaOcupado
+                className={`py-2 rounded-md font-medium transition-all border text-foreground ${estaOcupado
                   ? 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed opacity-50'
                   : horarioSelecionado === horario
-                    ? 'bg-black text-white border-black'
-                    : 'bg-white text-black border-gray-300 hover:border-black shadow-sm'
+                    ? 'bg-primary text-white border-black'
+                    : 'bg-background text-foreground border-gray-300 hover:border-foreground hover:bg-hover shadow-sm'
                   }`}
                 onClick={() => setHorarioSelecionado(horario)}
               >
@@ -190,21 +190,21 @@ export default function Home() {
 
         {horarioSelecionado && (
           <div className="mt-8 p-4 border-2 border-black rounded-lg bg-gray-100">
-            <h3 className="font-bold mb-4 text-center text-black">Finalizar para às {horarioSelecionado}</h3>
+            <h3 className="font-bold mb-4 text-center text-foreground">Finalizar para às {horarioSelecionado}</h3>
 
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Seu nome"
-                // Adicionamos 'text-black' para o texto aparecer e 'placeholder:text-gray-400' para a dica
-                className="w-full p-2 border border-gray-300 rounded text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                // Adicionamos 'text-foreground' para o texto aparecer e 'placeholder:text-gray-400' para a dica
+                className="w-full p-2 border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
               <input
                 type="text"
                 placeholder="Seu WhatsApp (apenas números)"
-                className="w-full p-2 border border-gray-300 rounded text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full p-2 border border-gray-300 rounded text-foreground placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
                 value={telefone}
                 onChange={(e) => {
                   // Importe a função 'aplicarMascaraWhatsapp' de '@/lib/utils' se necessário
@@ -215,7 +215,7 @@ export default function Home() {
               <button
                 onClick={confirmarAgendamento}
                 disabled={enviando}
-                className="w-full bg-black text-white py-3 rounded-lg font-bold hover:opacity-90 disabled:bg-gray-400"
+                className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 disabled:bg-gray-400"
               >
                 {enviando ? 'Processando...' : 'Confirmar Agendamento'}
               </button>

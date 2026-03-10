@@ -1,39 +1,49 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Vinculamos as cores do Tailwind às nossas variáveis CSS */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-card: var(--card); /* Nova variável para os cards */
+  --color-border: var(--border);
+  --color-hover: var(--hover);
   
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* Configuração de Variáveis por Tema */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #3b82f6; /* Azul base */
+  /* Tema Light - Agora com um rosa bem sutil no fundo */
+  --background: #fff; 
+  --foreground: #5b5b5b;
+  --primary: #262626;
+  --card: #fcfcfc; /* Cards brancos para destacar no fundo rosa */
+  --border: #fee2e2;
+  --hover: #878787;
 }
 
-/* Quando o HTML tiver o atributo data-theme='dark' */
 [data-theme='dark'] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --primary: #60a5fa;
+  --background: #171717;
+  --foreground: #6b6b6b;
+  --primary: #b8b8b8;
+  --card: #0a0a0a;
+  --border: #262626;
+  --hover: #e6e6e6;
 }
 
-/* Quando o HTML tiver o atributo data-theme='rosa' */
 [data-theme='rosa'] {
-  --background: #fff5f7;
+  /* Tema Rosa - Um tom mais saturado que o light */
+  --background: #fce7f3; 
   --foreground: #4a0415;
   --primary: #f472b6;
+  --card: #ffd5ed;
+  --border: #fbcfe8;
+  --hover: #ffcde7;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease; /* Suave ao trocar */
+  transition: background-color 0.3s ease;
 }

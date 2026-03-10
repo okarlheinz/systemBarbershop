@@ -24,7 +24,7 @@ export function Sidebar() {
       {/* Botão Hambúrguer para Celular */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-black text-white rounded-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-lg"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -39,13 +39,13 @@ export function Sidebar() {
 
       {/* Barra Lateral */}
       <aside className={`
-        fixed top-0 left-0 z-40 h-screen transition-transform bg-white border-r border-gray-200
+        fixed top-0 left-0 z-40 h-screen transition-transform bg-background border-r border-border
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
         lg:translate-x-0 w-64
       `}>
         <div className="flex flex-col h-full px-3 py-4">
           <div className="mb-10 px-4">
-            <h2 className="text-xl font-black text-black tracking-tighter">CODERX ADMIN</h2>
+            <h2 className="text-xl font-black text-foreground tracking-tighter">CODERX ADMIN</h2>
           </div>
 
           <nav className="flex-1 space-y-2 font-medium">
@@ -59,8 +59,8 @@ export function Sidebar() {
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center p-3 rounded-xl transition-colors ${
                     isActive 
-                      ? 'bg-black text-white' 
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-black'
+                      ? 'bg-primary text-white' 
+                      : 'text-foreground hover:bg-hover hover:text-gray-900'
                   }`}
                 >
                   <Icon size={22} />

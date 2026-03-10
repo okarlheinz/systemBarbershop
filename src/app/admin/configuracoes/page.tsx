@@ -90,7 +90,7 @@ export default function Configuracoes() {
     if (loading) return <div className="p-10">Carregando...</div>
 
     return (
-        <div className="flex bg-background min-h-screen">
+        <div className="flex bg-card min-h-screen">
             <Sidebar />
             <main className="flex-1 lg:ml-64 p-8">
                 <div className="max-w-2xl mx-auto">
@@ -138,7 +138,7 @@ export default function Configuracoes() {
                             type="text"
                             value={form.nome_barbearia}
                             onChange={e => setForm({ ...form, nome_barbearia: e.target.value })}
-                            className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
+                            className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                         />
                     </div>
 
@@ -149,7 +149,7 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_abertura}
                                     onChange={e => setForm({ ...form, horario_abertura: e.target.value })}
-                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
+                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                                 />
                             </div>
                             <div>
@@ -158,7 +158,7 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_fechamento}
                                     onChange={e => setForm({ ...form, horario_fechamento: e.target.value })}
-                                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
+                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                                 />
                             </div>
                         </div>
@@ -168,7 +168,7 @@ export default function Configuracoes() {
                             <select
                                 value={form.intervalo_minutos}
                                 onChange={e => setForm({ ...form, intervalo_minutos: Number(e.target.value) })}
-                                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
+                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black"
                             >
                                 <option value={15}>15 minutos</option>
                                 <option value={30}>30 minutos</option>
@@ -179,7 +179,7 @@ export default function Configuracoes() {
 
                         <button
                             disabled={salvando}
-                            className="w-full bg-black text-white p-4 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:bg-gray-400"
+                            className="w-full bg-foreground text-white p-4 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:bg-gray-400"
                         >
                             {salvando ? "Salvando..." : "Salvar Alterações"}
                         </button>

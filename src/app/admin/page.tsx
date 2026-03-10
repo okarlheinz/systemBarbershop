@@ -53,7 +53,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-card">
       <Sidebar />
 
       {/* O ml-0 no mobile e lg:ml-64 no desktop empurra o conteúdo para fora da sidebar */}
@@ -63,9 +63,9 @@ export default function Admin() {
         <div className="w-full max-w-4xl">
 
           {/* Header Profissional */}
-          <header className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mt-12 lg:mt-0">
+          <header className="flex justify-between items-center mb-8 bg-background p-6 rounded-2xl shadow-sm border border-border mt-12 lg:mt-0">
             <div>
-              <h1 className="text-2xl font-black text-gray-900">Agenda do Dia</h1>
+              <h1 className="text-2xl font-black text-foreground">Agenda do Dia</h1>
               <p className="text-gray-500 text-sm">Gerencie os cortes de hoje</p>
             </div>
             {/* Remova o botão de sair daqui se já estiver na sidebar para limpar o visual */}
@@ -73,12 +73,12 @@ export default function Admin() {
 
           {/* Estatísticas Rápidas */}
           <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+            <div className="bg-background p-4 rounded-xl border border-border shadow-sm">
               <p className="text-xs text-gray-400 uppercase font-bold">Total de Horários</p>
-              <p className="text-2xl font-black text-black">{agendamentos.length}</p>
+              <p className="text-2xl font-black text-foreground">{agendamentos.length}</p>
             </div>
-            <div className="bg-black p-4 rounded-xl shadow-sm text-white">
-              <p className="text-xs text-gray-400 uppercase font-bold">Próximo Cliente</p>
+            <div className="bg-primary p-4 rounded-xl shadow-sm text-white">
+              <p className="text-xs text-foreground uppercase font-bold">Próximo Cliente</p>
               <p className="text-xl font-bold truncate">
                 {agendamentos[0]?.nome_cliente || "Ninguém"}
               </p>
@@ -96,13 +96,13 @@ export default function Admin() {
                 const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
 
                 return (
-                  <div key={ag.id} className="group p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div key={ag.id} className="group p-5 bg-background border border-border rounded-2xl shadow-sm hover:bg-hover/10 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-gray-600">
+                      <div className="bg-card w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-foreground">
                         {ag.nome_cliente.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-lg text-gray-900 leading-tight">{ag.nome_cliente}</p>
+                        <p className="font-bold text-lg text-foreground leading-tight">{ag.nome_cliente}</p>
                         <a
                           href={`https://wa.me/55${ag.telefone_cliente.replace(/\D/g, '')}?text=Olá ${ag.nome_cliente}, confirmo seu horário hoje às ${hora}!`}
                           target="_blank"
@@ -116,7 +116,7 @@ export default function Admin() {
                     <div className="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-none pt-4 md:pt-0">
                       <div className="text-right">
                         <p className="text-xs text-gray-400 font-bold uppercase">{dia}</p>
-                        <p className="text-xl font-black text-black">{hora}</p>
+                        <p className="text-xl font-black text-foreground">{hora}</p>
                       </div>
 
                       <button
@@ -131,7 +131,7 @@ export default function Admin() {
                 )
               })
             ) : (
-              <div className="bg-white p-12 rounded-2xl border border-dashed border-gray-300 text-center">
+              <div className="bg-background p-12 rounded-2xl border border-dashed border-gray-300 text-center">
                 <p className="text-gray-400 font-medium">Não há agendamentos para hoje.</p>
               </div>
             )}
