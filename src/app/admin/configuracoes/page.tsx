@@ -26,7 +26,6 @@ export default function Configuracoes() {
         { id: 'rosa', cor: 'bg-pink-200 border-pink-300' },
     ];
 
-    // Função para alternar os dias de atendimento
     const toggleDia = (dia: string) => {
         const novosDias = form.dias_trabalho.includes(dia)
             ? form.dias_trabalho.filter(d => d !== dia)
@@ -38,24 +37,15 @@ export default function Configuracoes() {
         try {
             setUploading(true)
             if (!e.target.files || e.target.files.length === 0) return
-
             const file = e.target.files[0]
             const fileExt = file.name.split('.').pop()
             const fileName = `${Math.random()}.${fileExt}`
             const filePath = `${fileName}`
-
-            const { error: uploadError } = await supabase.storage
-                .from('logos')
-                .upload(filePath, file)
-
+            const { error: uploadError } = await supabase.storage.from('logos').upload(filePath, file)
             if (uploadError) throw uploadError
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('logos')
-                .getPublicUrl(filePath)
-
+            const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath)
             setForm({ ...form, logo_url: publicUrl })
-            alert("Logo carregada! Não esqueça de salvar as alterações.")
+            alert("Logo carregada!")
         } catch (error) {
             alert('Erro no upload!')
         } finally {
@@ -85,24 +75,18 @@ export default function Configuracoes() {
     async function salvar(e: React.FormEvent) {
         e.preventDefault()
         setSalvando(true)
-
         const { data: configAtual } = await supabase.from('configuracoes').select('id').single()
-
         const { error } = await supabase
             .from('configuracoes')
-            .update({
-                ...form,
-                tema: theme // Salva o tema atual selecionado
-            })
+            .update({ ...form, tema: theme })
             .eq('id', configAtual?.id)
-
         setSalvando(false)
-        if (!error) {
-            alert("Configurações salvas com sucesso!")
-        } else {
-            alert("Erro ao salvar configurações.")
-        }
+        if (!error) alert("Configurações salvas!");
+        else alert("Erro ao salvar.");
     }
+
+    // Classe padrão para todos os inputs ficarem iguais
+    const inputStyle = "w-full bg-white px-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px] flex items-center";
 
     if (loading) return <div className="p-10 text-foreground">Carregando...</div>
 
@@ -115,53 +99,34 @@ export default function Configuracoes() {
 
                     <form onSubmit={salvar} className="bg-background p-6 md:p-8 rounded-2xl shadow-sm border border-border space-y-6">
                         
-                        {/* SEÇÃO LOGO E TEMA */}
                         <div className="flex flex-col items-center mb-6">
                             <label className="block text-sm font-bold text-foreground mb-4 text-center w-full">Logo da Empresa</label>
                             <div className="relative group w-32 h-32 bg-gray-100 rounded-full overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-black transition-colors">
-                                {form.logo_url ? (
-                                    <img src={form.logo_url} className="w-full h-full object-cover" alt="Logo" />
-                                ) : (
-                                    <Camera className="text-gray-400" />
-                                )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleUpload}
-                                    disabled={uploading}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                />
+                                {form.logo_url ? <img src={form.logo_url} className="w-full h-full object-cover" alt="Logo" /> : <Camera className="text-gray-400" />}
+                                <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} className="absolute inset-0 opacity-0 cursor-pointer" />
                             </div>
-                            <p className="text-xs text-gray-400 mt-2">{uploading ? 'Enviando...' : 'Clique para trocar a imagem'}</p>
 
                             <div className="mt-6 flex flex-col items-center">
                                 <label className="text-sm font-medium mb-3 block text-foreground">Tema do Sistema</label>
                                 <div className="flex gap-4">
                                     {temas.map((t) => (
-                                        <button
-                                            key={t.id}
-                                            type="button"
-                                            onClick={() => setTheme(t.id)}
-                                            className={`w-10 h-10 rounded-full border-2 transition-all ${t.cor} ${theme === t.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70'}`}
-                                            title={t.id}
-                                        />
+                                        <button key={t.id} type="button" onClick={() => setTheme(t.id)} className={`w-10 h-10 rounded-full border-2 transition-all ${t.cor} ${theme === t.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70'}`} />
                                     ))}
                                 </div>
                             </div>
                         </div>
 
-                        {/* NOME DA EMPRESA */}
                         <div>
                             <label className="block text-sm font-bold text-foreground mb-2">Nome da Empresa</label>
                             <input
                                 type="text"
                                 value={form.nome_barbearia}
                                 onChange={e => setForm({ ...form, nome_barbearia: e.target.value })}
-                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
+                                className={inputStyle}
                             />
                         </div>
 
-                        {/* HORÁRIOS - RESPONSIVO */}
+                        {/* Aqui foi onde o ajuste de altura foi aplicado */}
                         <div className="flex flex-col sm:flex-row gap-4">
                             <div className="w-full">
                                 <label className="block text-sm font-bold text-foreground mb-2">Abertura</label>
@@ -169,7 +134,7 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_abertura}
                                     onChange={e => setForm({ ...form, horario_abertura: e.target.value })}
-                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
+                                    className={`${inputStyle} py-0`} 
                                 />
                             </div>
                             <div className="w-full">
@@ -178,12 +143,11 @@ export default function Configuracoes() {
                                     type="time"
                                     value={form.horario_fechamento}
                                     onChange={e => setForm({ ...form, horario_fechamento: e.target.value })}
-                                    className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px]"
+                                    className={`${inputStyle} py-0`}
                                 />
                             </div>
                         </div>
 
-                        {/* DIAS DE ATENDIMENTO */}
                         <div>
                             <label className="block text-sm font-bold text-foreground mb-3">Dias de Atendimento</label>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -192,11 +156,7 @@ export default function Configuracoes() {
                                         key={dia}
                                         type="button"
                                         onClick={() => toggleDia(dia)}
-                                        className={`p-2 text-xs font-bold rounded-lg border transition-all h-[40px] ${
-                                            form.dias_trabalho.includes(dia)
-                                                ? 'bg-primary text-white border-primary'
-                                                : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                                        }`}
+                                        className={`p-2 text-xs font-bold rounded-lg border transition-all h-[45px] ${form.dias_trabalho.includes(dia) ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-200'}`}
                                     >
                                         {dia.charAt(0).toUpperCase() + dia.slice(1, 3)}
                                     </button>
@@ -204,13 +164,12 @@ export default function Configuracoes() {
                             </div>
                         </div>
 
-                        {/* INTERVALO */}
                         <div>
                             <label className="block text-sm font-bold text-foreground mb-2">Intervalo entre Atendimentos (minutos)</label>
                             <select
                                 value={form.intervalo_minutos}
                                 onChange={e => setForm({ ...form, intervalo_minutos: Number(e.target.value) })}
-                                className="w-full bg-white p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none text-black h-[50px] appearance-none"
+                                className={inputStyle}
                             >
                                 <option value={15}>15 minutos</option>
                                 <option value={30}>30 minutos</option>
@@ -219,11 +178,7 @@ export default function Configuracoes() {
                             </select>
                         </div>
 
-                        {/* BOTÃO SALVAR */}
-                        <button
-                            disabled={salvando}
-                            className="w-full bg-foreground text-white p-4 rounded-xl font-bold hover:opacity-90 transition-opacity disabled:bg-gray-400 h-[60px]"
-                        >
+                        <button disabled={salvando} className="w-full bg-foreground text-white p-4 rounded-xl font-bold h-[60px]">
                             {salvando ? "Salvando..." : "Salvar Alterações"}
                         </button>
                     </form>
