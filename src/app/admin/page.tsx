@@ -55,21 +55,21 @@ export default function Admin() {
   }
 
   // Crie a função remover para marcar como cancelado
-  async function remover(id: string) {
-    if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
+async function remover(id: string) {
+  if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
+  
+  // Mudamos de .update para .delete() para liberar a constraint de unicidade
+  const { error } = await supabase
+    .from('agendamentos')
+    .delete()
+    .eq('id', id)
 
-    // Mudamos de .update para .delete() para liberar a constraint de unicidade
-    const { error } = await supabase
-      .from('agendamentos')
-      .delete()
-      .eq('id', id)
-
-    if (!error) {
-      setAgendamentos(prev => prev.filter(a => a.id !== id))
-    } else {
-      alert("Erro ao remover: " + error.message)
-    }
+  if (!error) {
+    setAgendamentos(prev => prev.filter(a => a.id !== id))
+  } else {
+    alert("Erro ao remover: " + error.message)
   }
+}
 
 
 
