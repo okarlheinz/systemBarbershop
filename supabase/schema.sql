@@ -45,3 +45,8 @@ ON CONFLICT DO NOTHING;
 
 -- 6. COLOCAR TEMA PADRAO
 ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS tema TEXT DEFAULT 'rosa';
+
+-- 7. LEITURA NA TABELA CONFIGURACAO
+
+CREATE POLICY "Permitir leitura pública de configurações" 
+ON configuracoes FOR SELECT USING (true);
