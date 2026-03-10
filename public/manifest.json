@@ -1,0 +1,6 @@
+{
+  "name": "BarberShop CoderX Admin",
+  "short_name": "BarberAdmin",
+  "display": "standalone",
+  "start_url": "/"
+}

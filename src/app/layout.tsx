@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BarberShop",
   description: "Criado por CoderX",
+  icons: {
+    apple: "/apple-icon.png", // Isso aponta para o arquivo na pasta public
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
