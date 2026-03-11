@@ -65,7 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_atendente ON agendamentos(atendente_
 
 -- 7. INSERÇÃO INICIAL (Apenas se a tabela estiver vazia)
 INSERT INTO configuracoes (nome_barbearia, horario_abertura, horario_fechamento, intervalo_minutos)
-VALUES ('Agendei.vc - Sua Empresa', '08:00', '19:00', 30)
+VALUES ('Agendei.tu - Sua Empresa', '08:00', '19:00', 30)
 ON CONFLICT DO NOTHING;
 
 -- 8. POLÍTICAS DE ACESSO (RLS)
