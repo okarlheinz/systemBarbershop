@@ -400,7 +400,7 @@ export default function Home() {
         )}
 
         <div className="mt-10 pt-6 border-t border-border flex flex-col items-center">
-          <h2 className="text-lg font-black text-foreground tracking-tighter uppercase italic opacity-50">Agendei.vc</h2>
+          <h2 className="text-lg font-black text-foreground tracking-tighter uppercase italic opacity-50">Agendei.tu</h2>
           <p className="text-[9px] text-gray-400 font-bold tracking-widest">POWERED BY CODERX</p>
         </div>
       </div>
