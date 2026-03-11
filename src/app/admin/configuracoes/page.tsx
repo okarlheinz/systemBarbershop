@@ -75,16 +75,40 @@ export default function Configuracoes() {
     }, [setTheme])
 
     async function salvar(e: React.FormEvent) {
-        e.preventDefault()
-        setSalvando(true)
-        const { data: configAtual } = await supabase.from('configuracoes').select('id').single()
-        const { error } = await supabase
-            .from('configuracoes')
-            .update({ ...form, tema: theme })
-            .eq('id', configAtual?.id)
-        setSalvando(false)
-        if (!error) alert("Configurações salvas!");
-        else alert("Erro ao salvar.");
+        e.preventDefault();
+        setSalvando(true);
+
+        try {
+            // Buscamos a primeira linha disponível
+            const { data: configAtual } = await supabase.from('configuracoes').select('id').single();
+
+            if (configAtual?.id) {
+                const { error } = await supabase
+                    .from('configuracoes')
+                    .update({
+                        nome_barbearia: form.nome_barbearia,
+                        horario_abertura: form.horario_abertura,
+                        horario_fechamento: form.horario_fechamento,
+                        intervalo_minutos: form.intervalo_minutos,
+                        logo_url: form.logo_url,
+                        email_notificacao: form.email_notificacao,
+                        dias_trabalho: form.dias_trabalho,
+                        tema: theme
+                    })
+                    .eq('id', configAtual.id);
+
+                if (error) throw error;
+                alert("Configurações salvas com sucesso!");
+
+                // Força o recarregamento dos dados para garantir sincronia
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao salvar no banco de dados.");
+        } finally {
+            setSalvando(false);
+        }
     }
 
     // Classe padrão para todos os inputs ficarem iguais
