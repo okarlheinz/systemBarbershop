@@ -257,7 +257,7 @@ export default function Home() {
       // --- NOVO: Redirecionar para WhatsApp ---
       const dataFormatada = dataSelecionada.split('-').reverse().join('/');
       const numeroWhatsApp = '5581992957941'; // sem espaços ou caracteres especiais
-      const textoWhatsApp = `Olá! Fiz um agendamento com o atendente ${nomeAtendente}, na data ${dataFormatada} e no horário ${horarioSelecionado}. Está confirmado?`;
+      const textoWhatsApp = `Olá! Acabei de usar o Agendei.tu para marcar um horário com o atendente ${nomeAtendente}, na data ${dataFormatada} e no horário ${horarioSelecionado}. Está confirmado?`;
       const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(textoWhatsApp)}`;
       window.open(urlWhatsApp, '_blank');
 

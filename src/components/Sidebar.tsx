@@ -108,7 +108,7 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-            <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">Agendei.vc</h2>
+            <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">Agendei.tu</h2>
             <p className="text-[10px] text-gray-400 font-bold -mt-1 uppercase">Powered by CoderX</p>
           </div>
 

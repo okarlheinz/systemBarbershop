@@ -119,7 +119,7 @@ export default function Login() {
 
       <div className="fixed bottom-6 left-6 opacity-60 hover:opacity-100 transition-opacity hidden md:block">
         <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">
-          Agendei.vc
+          Agendei.tu
         </h2>
         <p className="text-[10px] text-gray-400 font-bold -mt-1">POWERED BY CODERX</p>
       </div>
