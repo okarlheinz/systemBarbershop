@@ -1,6 +1,6 @@
 {
-  "name": "BarberShop CoderX Admin",
-  "short_name": "BarberAdmin",
+  "name": "Agendei.tu - Sistema de Agendamento para Barbearias",
+  "short_name": "Agendei.tu",
   "display": "standalone",
   "start_url": "/"
 }
