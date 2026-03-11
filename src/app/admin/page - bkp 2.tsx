@@ -53,76 +53,18 @@ export default function Admin() {
     if (!permissao) return
 
     const channel = supabase
-      .channel('agendamentos-live')
+      .channel('agendamentos-realtime')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'agendamentos'
         },
-        async (payload) => {
+        () => {
 
-          const novo = payload.new
-
-          const { data: atendente } = await supabase
-            .from('atendentes')
-            .select('nome')
-            .eq('id', novo.atendente_id)
-            .single()
-
-          const agendamentoCompleto = {
-            ...novo,
-            atendentes: atendente
-          }
-
-          setAgendamentos((prev) => {
-
-            const nivel = localStorage.getItem('user_permissao')
-            const meuId = localStorage.getItem('atendente_id')
-
-            if (nivel === 'apenas_agenda' && novo.atendente_id !== meuId) {
-              return prev
-            }
-
-            return [agendamentoCompleto, ...prev]
-          })
-
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'agendamentos'
-        },
-        (payload) => {
-
-          const atualizado = payload.new
-
-          setAgendamentos((prev) =>
-            prev.map((ag) =>
-              ag.id === atualizado.id ? { ...ag, ...atualizado } : ag
-            )
-          )
-
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'agendamentos'
-        },
-        (payload) => {
-
-          const deletado = payload.old
-
-          setAgendamentos((prev) =>
-            prev.filter((ag) => ag.id !== deletado.id)
-          )
+          const nivel = localStorage.getItem('user_permissao') || 'completo'
+          carregarAgendamentos(nivel, filtroAtendente)
 
         }
       )
@@ -132,7 +74,7 @@ export default function Admin() {
       supabase.removeChannel(channel)
     }
 
-  }, [permissao])
+  }, [permissao, filtroAtendente])
 
   useEffect(() => {
     if (permissao === 'completo') {
@@ -193,24 +135,6 @@ export default function Admin() {
   }
 
   const isRestrito = permissao === 'apenas_agenda'
-
-  function formatarDataHora(data_hora: string) {
-    const data = new Date(data_hora)
-
-    const hora = data.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
-    })
-
-    const dia = data.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      timeZone: 'America/Sao_Paulo'
-    })
-
-    return { dia, hora }
-  }
 
   return (
     <div className="flex min-h-screen bg-card">

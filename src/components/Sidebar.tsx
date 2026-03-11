@@ -75,7 +75,7 @@ export function Sidebar() {
   const menuItems = [
     { name: 'Agenda', href: '/admin', icon: Calendar, visible: true },
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, visible: true },
-    { name: 'Minha Equipa', href: '/admin/equipe', icon: Users, visible: true },
+    { name: 'Atendentes', href: '/admin/equipe', icon: Users, visible: true },
     { name: 'Configuração', href: '/admin/configuracoes', icon: Settings, visible: true },
   ]
 

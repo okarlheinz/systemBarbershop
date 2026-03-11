@@ -14,78 +14,61 @@ export default function Login() {
         .from('configuracoes')
         .select('nome_barbearia, logo_url, tema')
         .single()
-
+      
       if (data) {
         setConfig(data)
         const temaDefinido = data.tema || 'light'
         document.documentElement.setAttribute('data-theme', temaDefinido)
       }
     }
-
     carregarConfig()
   }, [])
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setCarregando(true)
+    e.preventDefault();
+    setCarregando(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password
-      })
+      });
 
       if (error) {
-        alert("Erro ao entrar: " + error.message)
-        setCarregando(false)
-        return
+        alert("Erro ao entrar: " + error.message);
+        setCarregando(false);
+        return;
       }
 
       if (data?.session) {
-
-        const userId = data.session.user.id
-
-        // buscamos o perfil do atendente
-        const { data: perfil } = await supabase
-          .from('atendentes')
-          .select('id, permissao')
-          .eq('auth_user_id', userId)
-          .single()
-
-        if (perfil) {
-          localStorage.setItem('user_permissao', perfil.permissao)
-          localStorage.setItem('atendente_id', perfil.id)
-        }
-
-        window.location.replace('/admin')
-
+        window.location.replace('/admin');
       } else {
-        setCarregando(false)
-        alert("Não foi possível estabelecer uma sessão.")
+        setCarregando(false);
+        alert("Não foi possível estabelecer uma sessão.");
       }
-
     } catch (err) {
-      console.error("Erro inesperado:", err)
-      setCarregando(false)
-      alert("Ocorreu um erro inesperado no login.")
+      console.error("Erro inesperado:", err);
+      setCarregando(false);
+      alert("Ocorreu um erro inesperado no login.");
     }
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-card p-6 transition-colors duration-300 relative">
       <form onSubmit={handleLogin} className="bg-background p-8 rounded-xl shadow-lg w-full max-w-sm border border-border">
-
+        
+        {/* Logo e Nome Dinâmicos */}
         <div className="flex flex-col items-center mb-6">
           {config?.logo_url ? (
-            <img
-              src={config.logo_url}
-              alt="Logo"
+            <img 
+              src={config.logo_url} 
+              alt="Logo" 
               className="w-24 h-24 rounded-full object-cover mb-4 border-2 border-white shadow-sm"
             />
           ) : (
             <div className="w-24 h-24 rounded-full bg-gray-200 mb-4 animate-pulse" />
           )}
-
+          
           <h2 className="text-2xl font-bold text-center text-foreground">
             {config?.nome_barbearia || 'Carregando...'}
           </h2>
@@ -99,7 +82,6 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-
           <input
             type="password"
             placeholder="Senha"
@@ -107,7 +89,6 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
           <button
             disabled={carregando}
             className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:opacity-90 disabled:bg-gray-400 transition-all"
@@ -117,6 +98,7 @@ export default function Login() {
         </div>
       </form>
 
+      {/* Rodapé Discreto no Canto Esquerdo */}
       <div className="fixed bottom-6 left-6 opacity-60 hover:opacity-100 transition-opacity hidden md:block">
         <h2 className="text-xl font-black text-foreground tracking-tighter uppercase italic">
           Agendei.vc
