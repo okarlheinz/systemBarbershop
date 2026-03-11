@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CoderX",
+  title: "Agendei.tu",
   description: "Criado por CoderX",
   icons: {
     apple: "/apple-icon.png", // Isso aponta para o arquivo na pasta public
