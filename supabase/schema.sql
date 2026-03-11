@@ -74,3 +74,6 @@ CREATE POLICY "Leitura pública de configurações" ON configuracoes FOR SELECT 
 
 ALTER TABLE atendentes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Leitura pública de atendentes" ON atendentes FOR SELECT USING (true);
+
+ALTER TABLE configuracoes 
+ADD COLUMN IF NOT EXISTS email_notificacao TEXT;

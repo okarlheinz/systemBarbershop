@@ -15,7 +15,6 @@ export default function Home() {
   const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
   const [dataSelecionada, setDataSelecionada] = useState(hoje)
 
-
   // --- ESTADOS PARA GESTÃO DE EQUIPE ---
   const [atendentes, setAtendentes] = useState<any[]>([])
   const [atendenteSelecionado, setAtendenteSelecionado] = useState<any>(null)
@@ -31,6 +30,8 @@ export default function Home() {
   const dataObjeto = new Date(dataSelecionada + 'T00:00:00');
   const nomeDiaSelecionado = diasSemanaMapa[dataObjeto.getDay()];
   const isDiaDeTrabalho = config?.dias_trabalho?.includes(nomeDiaSelecionado);
+
+
 
   // --- Função para carregar ocupação (useCallback para evitar recriações) ---
   const carregarOcupacao = useCallback(async () => {
@@ -227,7 +228,12 @@ export default function Home() {
       if (errorAgendamento) throw errorAgendamento;
 
       // --- NOVO: Enviar e-mail ---
+      const { data: config } = await supabase
+        .from('configuracoes')
+        .select('email_notificacao')
+        .single();
       const nomeAtendente = atendenteSelecionado?.nome || 'a equipe';
+      const emailDestino = config?.email_notificacao || 'karlheinzkhar@gmail.com';
       const assunto = 'Novo agendamento realizado';
       const mensagem = `Olá!\n\nUm novo agendamento foi realizado:\n\n` +
         `Cliente: ${nome}\n` +
@@ -237,11 +243,12 @@ export default function Home() {
         `Horário: ${horarioSelecionado}\n\n` +
         `Acesse o painel para mais detalhes.`;
 
+
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          destinatario: 'karlheinzkhar@gmail.com',
+          destinatario: emailDestino,
           assunto,
           mensagem,
         }),
@@ -340,10 +347,10 @@ export default function Home() {
                         disabled={estaOcupado}
                         onClick={() => setHorarioSelecionado(horario)}
                         className={`py-3 rounded-xl font-bold transition-all border ${estaOcupado
-                            ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                            : horarioSelecionado === horario
-                              ? 'bg-primary text-white border-primary shadow-lg scale-105'
-                              : 'bg-background text-foreground border-border hover:border-primary hover:scale-105'
+                          ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                          : horarioSelecionado === horario
+                            ? 'bg-primary text-white border-primary shadow-lg scale-105'
+                            : 'bg-background text-foreground border-border hover:border-primary hover:scale-105'
                           }`}
                       >
                         {estaOcupado ? 'Ocupado' : horario}

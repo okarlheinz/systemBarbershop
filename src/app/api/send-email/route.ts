@@ -8,16 +8,22 @@ export async function POST(request: Request) {
     // Configuração do transporte (use variáveis de ambiente)
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,      // ex.: smtp.gmail.com
-      port: Number(process.env.EMAIL_PORT) || 587,
-      secure: false,                      // true para 465
+      port: Number(process.env.EMAIL_PORT) || 465,
+      secure: true,                      // true para 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      // Isso evita erros de certificado em servidores brasileiros
+      tls: {
+        // Isso força o Node a aceitar o certificado da Hostinger mesmo em localhost
+        rejectUnauthorized: false,
+        minVersion: "TLSv1.2"
+      }
     });
 
     await transporter.sendMail({
-      from: `"Agendamentos" <${process.env.EMAIL_FROM}>`,
+      from: process.env.EMAIL_USER,
       to: destinatario,
       subject: assunto,
       text: mensagem,

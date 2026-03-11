@@ -17,6 +17,7 @@ export default function Configuracoes() {
         horario_fechamento: '',
         intervalo_minutos: 30,
         logo_url: '',
+        email_notificacao: '', // ADICIONE ESTA LINHA
         dias_trabalho: ['segunda', 'terca', 'quarta', 'quinta', 'sexta'] as string[]
     })
 
@@ -63,6 +64,7 @@ export default function Configuracoes() {
                     horario_fechamento: data.horario_fechamento || '',
                     intervalo_minutos: data.intervalo_minutos || 30,
                     logo_url: data.logo_url || '',
+                    email_notificacao: data.email_notificacao || '',
                     dias_trabalho: data.dias_trabalho || ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
                 })
                 if (data.tema) setTheme(data.tema)
@@ -124,6 +126,18 @@ export default function Configuracoes() {
                                 onChange={e => setForm({ ...form, nome_barbearia: e.target.value })}
                                 className={inputStyle}
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-foreground mb-2">E-mail para Notificações</label>
+                            <input
+                                type="email"
+                                placeholder="ex: contato@barbearia.com"
+                                value={form.email_notificacao}
+                                onChange={e => setForm({ ...form, email_notificacao: e.target.value })}
+                                className={inputStyle}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Este e-mail receberá os avisos de novos agendamentos.</p>
                         </div>
 
                         {/* Aqui foi onde o ajuste de altura foi aplicado */}
