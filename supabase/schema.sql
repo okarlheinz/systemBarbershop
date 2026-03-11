@@ -60,4 +60,37 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_cliente_id ON agendamentos(cliente_i
 ALTER TABLE configuracoes 
 ADD COLUMN IF NOT EXISTS email_notificacao TEXT;
 
--- Comentário: O e-mail cadastrado aqui receberá alertas automáticos de novos agendamentos.
+-- 1. Adiciona a chave mestra de modalidade (Booleano)
+ALTER TABLE configuracoes ADD COLUMN IF NOT EXISTS multi_atendente BOOLEAN DEFAULT false;
+
+-- 2. Tabela de Atendentes (Com suporte a Login e Permissões)
+CREATE TABLE IF NOT EXISTS atendentes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  auth_user_id UUID UNIQUE, -- ID que liga ao e-mail/senha do Supabase Auth
+  nome TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  foto_url TEXT,
+  permissao TEXT DEFAULT 'apenas_agenda', -- 'completo' ou 'apenas_agenda'
+  ativo BOOLEAN DEFAULT true,
+  criado_em TIMESTAMPTZ DEFAULT now()
+);
+
+-- 3. Prepara a tabela de agendamentos para múltiplos profissionais
+ALTER TABLE agendamentos ADD COLUMN IF NOT EXISTS atendente_id UUID REFERENCES atendentes(id);
+
+-- 4. MIGRAÇÃO DA REGRA DE HORÁRIO (O pulo do gato)
+-- Primeiro, removemos a trava antiga que era "um por horário no mundo todo"
+ALTER TABLE agendamentos DROP CONSTRAINT IF EXISTS unique_agendamento_horario;
+
+-- Segundo, criamos a trava "um por atendente por horário"
+-- No modo Autônomo (atendente_id é NULL), ela continua barrando horários duplicados normalmente.
+ALTER TABLE agendamentos ADD CONSTRAINT unique_atendente_horario UNIQUE (atendente_id, data_hora);
+
+-- Garante que todos (mesmo deslogados na home) possam ver as fotos e nomes dos atendentes
+CREATE POLICY "Leitura pública de atendentes" 
+ON atendentes FOR SELECT USING (true);
+
+-- Garante que usuários logados possam inserir/editar fotos no bucket
+-- (Troque 'logos' pelo nome do seu bucket se for diferente)
+CREATE POLICY "Permitir upload de fotos de perfil"
+ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'logos');

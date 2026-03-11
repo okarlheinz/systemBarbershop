@@ -6,14 +6,20 @@ import { Sidebar } from '@/components/Sidebar'
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState<any[]>([])
   const [carregando, setCarregando] = useState(true)
+  
+  // Estado para controlar o layout dinâmico
+  const [permissao, setPermissao] = useState<string | null>(null)
 
   useEffect(() => {
-    // Verifica sessão e carrega dados
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession()
       if (!data.session) {
         window.location.href = '/login'
       } else {
+        // Recupera a permissão para ajustar o layout
+        const nivel = localStorage.getItem('user_permissao') || 'completo'
+        setPermissao(nivel)
+        
         await carregarAgendamentos()
         setCarregando(false)
       }
@@ -22,7 +28,6 @@ export default function Admin() {
   }, [])
 
   useEffect(() => {
-    // Realtime: Atualiza a lista automaticamente quando houver mudanças no banco
     const channel = supabase
       .channel('agendamentos-db')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => {
@@ -37,13 +42,12 @@ export default function Admin() {
     const { data } = await supabase
       .from('agendamentos')
       .select('*')
-      .eq('status', 'pendente') // Adicione esta linha
+      .eq('status', 'pendente')
       .order('data_hora', { ascending: true })
 
     if (data) setAgendamentos(data)
   }
 
-  // Altere a função finalizar para dar UPDATE em vez de DELETE
   async function finalizar(id: string) {
     if (!confirm("Confirmar conclusão do atendimento?")) return
     const { error } = await supabase
@@ -54,57 +58,50 @@ export default function Admin() {
     if (!error) setAgendamentos(prev => prev.filter(a => a.id !== id))
   }
 
-  // Crie a função remover para marcar como cancelado
-async function remover(id: string) {
-  if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
-  
-  // Mudamos de .update para .delete() para liberar a constraint de unicidade
-  const { error } = await supabase
-    .from('agendamentos')
-    .delete()
-    .eq('id', id)
+  async function remover(id: string) {
+    if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
+    const { error } = await supabase
+      .from('agendamentos')
+      .delete()
+      .eq('id', id)
 
-  if (!error) {
-    setAgendamentos(prev => prev.filter(a => a.id !== id))
-  } else {
-    alert("Erro ao remover: " + error.message)
+    if (!error) {
+      setAgendamentos(prev => prev.filter(a => a.id !== id))
+    } else {
+      alert("Erro ao remover: " + error.message)
+    }
   }
-}
 
-
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    window.location.assign('/login')
-  }
+  // Define se deve aplicar a margem da sidebar ou centralizar total
+  const isRestrito = permissao === 'apenas_agenda'
 
   return (
     <div className="flex min-h-screen bg-card">
       <Sidebar />
 
-      {/* O ml-0 no mobile e lg:ml-64 no desktop empurra o conteúdo para fora da sidebar */}
-      <main className="flex-1 flex flex-col items-center ml-0 lg:ml-64 p-4 md:p-8 transition-all duration-300">
+      {/* Ajuste dinâmico: Se for restrito, removemos o lg:ml-64 e adicionamos mt-20 para o Header */}
+      <main className={`
+        flex-1 flex flex-col items-center p-4 md:p-8 transition-all duration-300
+        ${isRestrito ? 'ml-0 mt-20' : 'ml-0 lg:ml-64'}
+      `}>
 
-        {/* Container com largura máxima para manter o visual centralizado anterior */}
         <div className="w-full max-w-4xl">
-
-          {/* Header Profissional */}
+          {/* Header da Agenda */}
           <header className="flex justify-between items-center mb-8 bg-background p-6 rounded-2xl shadow-sm border border-border mt-12 lg:mt-0">
             <div>
-              <h1 className="text-2xl font-black text-foreground">Agenda do Dia</h1>
-              <p className="text-gray-500 text-sm">Gerencie os cortes de hoje</p>
+              <h1 className="text-2xl font-black text-foreground uppercase tracking-tighter">Agenda do Dia</h1>
+              <p className="text-gray-500 text-sm">Gerencie os atendimentos</p>
             </div>
-            {/* Remova o botão de sair daqui se já estiver na sidebar para limpar o visual */}
           </header>
 
-          {/* Estatísticas Rápidas */}
+          {/* Estatísticas */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="bg-background p-4 rounded-xl border border-border shadow-sm">
               <p className="text-xs text-gray-400 uppercase font-bold">Total de Horários</p>
               <p className="text-2xl font-black text-foreground">{agendamentos.length}</p>
             </div>
             <div className="bg-primary p-4 rounded-xl shadow-sm text-white">
-              <p className="text-xs text-foreground uppercase font-bold">Próximo Cliente</p>
+              <p className="text-xs text-foreground uppercase font-bold opacity-80">Próximo Cliente</p>
               <p className="text-xl font-bold truncate">
                 {agendamentos[0]?.nome_cliente || "Ninguém"}
               </p>
@@ -149,14 +146,12 @@ async function remover(id: string) {
                         <button
                           onClick={() => remover(ag.id)}
                           className="bg-red-500 text-white px-3 py-2 rounded-xl font-bold hover:bg-red-600 transition-all shadow-sm"
-                          title="Remover/Cancelar"
                         >
                           Remover
                         </button>
                         <button
                           onClick={() => finalizar(ag.id)}
                           className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 transition-all shadow-sm"
-                          title="Concluir atendimento"
                         >
                           Concluir
                         </button>
