@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Sidebar } from '@/components/Sidebar'
-import { Calendar, Users, AlertCircle, TrendingUp, BarChart3 } from 'lucide-react'
+import { Calendar, Users, AlertCircle, TrendingUp, BarChart3, Scissors } from 'lucide-react'
 
 export default function Dashboard() {
     const [carregando, setCarregando] = useState(true)
     const [filtro, setFiltro] = useState('mes')
     const [topClientes, setTopClientes] = useState<any[]>([])
+    const [atendimentosPorFuncionario, setAtendimentosPorFuncionario] = useState<any[]>([])
     const [fluxoHorarios, setFluxoHorarios] = useState<any[]>([])
     const [fluxoDias, setFluxoDias] = useState<any[]>([])
     const [clientesAusentes, setClientesAusentes] = useState<any[]>([])
@@ -31,19 +32,29 @@ export default function Dashboard() {
             setCarregando(true)
             const { inicio, fim } = getDatasFiltro()
 
-            // 1. Busca configurações para saber os dias de atendimento
+            // 1. Busca configurações
             const { data: config } = await supabase.from('configuracoes').select('dias_trabalho').single()
             const diasTrabalho = config?.dias_trabalho || []
 
-            // 2. Busca agendamentos CONCLUÍDOS no período
+            // 2. Busca agendamentos CONCLUÍDOS com join nos atendentes
             const { data: agendamentos } = await supabase
                 .from('agendamentos')
-                .select('nome_cliente, data_hora')
+                .select('nome_cliente, data_hora, atendentes(nome)')
                 .eq('status', 'concluido')
                 .gte('data_hora', inicio)
                 .lte('data_hora', fim)
 
             if (agendamentos) {
+                // Ranking por Funcionário
+                const contagemFunc: any = {}
+                agendamentos.forEach((a: any) => { // Adicionando o :any aqui
+                    const nomeFunc = a.atendentes?.nome || 'Equipe'
+                    contagemFunc[nomeFunc] = (contagemFunc[nomeFunc] || 0) + 1
+                })
+                setAtendimentosPorFuncionario(Object.entries(contagemFunc)
+                    .map(([nome, total]) => ({ nome, total }))
+                    .sort((a: any, b: any) => b.total - a.total))
+
                 // Ranking de Clientes
                 const contagem: any = {}
                 agendamentos.forEach(a => contagem[a.nome_cliente] = (contagem[a.nome_cliente] || 0) + 1)
@@ -95,13 +106,14 @@ export default function Dashboard() {
 
     const maxHoras = Math.max(...fluxoHorarios.map(h => h.total), 1)
     const maxDias = Math.max(...fluxoDias.map(d => d.total), 1)
+    const maxFunc = Math.max(...atendimentosPorFuncionario.map(f => f.total), 1)
 
     return (
         <div className="flex min-h-screen bg-background">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-64 p-4 md:p-8">
+            <main className="flex-1 ml-0 lg:ml-64 p-4 md:p-8 pt-20 lg:pt-8">
                 <div className="max-w-6xl mx-auto">
-                    <header className="mb-8 mt-12 lg:mt-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-2xl font-black text-foreground uppercase tracking-tighter">Dashboard Analítico</h1>
                             <p className="text-gray-500 text-sm font-medium">Dados de performance Agendei.vc</p>
@@ -118,8 +130,32 @@ export default function Dashboard() {
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Dias de Maior Movimento */}
-                        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
+
+                        {/* 1. Ranking de Atendentes (Gráfico de Barras Horizontais) */}
+                        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm lg:col-span-2">
+                            <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+                                <Scissors className="text-primary w-5 h-5" /> Atendimentos por Profissional
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                                {atendimentosPorFuncionario.map((f, i) => (
+                                    <div key={i} className="space-y-2">
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs font-black uppercase tracking-tighter text-foreground">{f.nome}</span>
+                                            <span className="text-xs font-black text-primary">{f.total} atendimentos</span>
+                                        </div>
+                                        <div className="h-3 bg-background border border-border rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-primary transition-all duration-1000"
+                                                style={{ width: `${(f.total / maxFunc) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 2. Dias de Maior Movimento (Mantido original) */}
+                        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                             <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                                 <BarChart3 className="text-primary w-5 h-5" /> Dias de Maior Movimento
                             </h2>
@@ -141,8 +177,8 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Horários de Maior Fluxo */}
-                        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow">
+                        {/* 3. Horários de Maior Fluxo (Mantido original) */}
+                        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                             <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                                 <AlertCircle className="text-primary w-5 h-5" /> Horários de Maior Fluxo
                             </h2>
@@ -164,7 +200,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Ranking Clientes */}
+                        {/* 4. Top 5 Clientes (Mantido original) */}
                         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                             <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                                 <TrendingUp className="text-primary w-5 h-5" /> Top 5 Clientes do Período
@@ -179,7 +215,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Recuperação de Clientes */}
+                        {/* 5. Recuperação de Clientes Sumidos (Mantido original) */}
                         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                             <h2 className="text-lg font-bold text-red-500 mb-6 flex items-center gap-2">
                                 <Users className="w-5 h-5" /> Clientes Sumidos (+30 dias)

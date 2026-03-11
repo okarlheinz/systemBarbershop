@@ -6,9 +6,11 @@ import { Sidebar } from '@/components/Sidebar'
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState<any[]>([])
   const [carregando, setCarregando] = useState(true)
-  
-  // Estado para controlar o layout dinâmico
   const [permissao, setPermissao] = useState<string | null>(null)
+  
+  // --- MEUS NOVOS ESTADOS PARA FILTRAGEM MASTER ---
+  const [atendentes, setAtendentes] = useState<any[]>([])
+  const [filtroAtendente, setFiltroAtendente] = useState<string>('todos')
 
   useEffect(() => {
     const checkSession = async () => {
@@ -16,107 +18,104 @@ export default function Admin() {
       if (!data.session) {
         window.location.href = '/login'
       } else {
-        // Recupera a permissão para ajustar o layout
         const nivel = localStorage.getItem('user_permissao') || 'completo'
         setPermissao(nivel)
         
-        await carregarAgendamentos()
+        // Se for Master, carregamos a lista de atendentes para o filtro
+        if (nivel === 'completo') {
+          const { data: lista } = await supabase.from('atendentes').select('id, nome')
+          setAtendentes(lista || [])
+        }
+
+        await carregarAgendamentos(nivel, 'todos')
         setCarregando(false)
       }
     }
     checkSession()
   }, [])
 
+  // Recarrega a agenda sempre que o filtro mudar
   useEffect(() => {
-    const channel = supabase
-      .channel('agendamentos-db')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => {
-        carregarAgendamentos()
-      })
-      .subscribe()
+    if (permissao) carregarAgendamentos(permissao, filtroAtendente)
+  }, [filtroAtendente])
 
-    return () => { supabase.removeChannel(channel) }
-  }, [])
-
-  async function carregarAgendamentos() {
-    const { data } = await supabase
+  async function carregarAgendamentos(nivel: string, atendenteId: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    // Buscamos os agendamentos trazendo também o nome do atendente (JOIN)
+    let query = supabase
       .from('agendamentos')
-      .select('*')
+      .select('*, atendentes(nome)')
       .eq('status', 'pendente')
-      .order('data_hora', { ascending: true })
 
+    // LÓGICA DE PRIVACIDADE E FILTRAGEM
+    if (nivel === 'apenas_agenda') {
+      // Se for funcionário, forçamos a filtragem pelo ID dele vinculado ao Auth
+      const { data: perfil } = await supabase.from('atendentes').select('id').eq('auth_user_id', user?.id).single()
+      if (perfil) query = query.eq('atendente_id', perfil.id)
+    } else if (atendenteId !== 'todos') {
+      // Se for Master e escolheu um atendente no filtro
+      query = query.eq('atendente_id', atendenteId)
+    }
+
+    const { data } = await query.order('data_hora', { ascending: true })
     if (data) setAgendamentos(data)
   }
 
+  // Funções de Finalizar e Remover permanecem as mesmas
   async function finalizar(id: string) {
     if (!confirm("Confirmar conclusão do atendimento?")) return
-    const { error } = await supabase
-      .from('agendamentos')
-      .update({ status: 'concluido' })
-      .eq('id', id)
-
+    const { error } = await supabase.from('agendamentos').update({ status: 'concluido' }).eq('id', id)
     if (!error) setAgendamentos(prev => prev.filter(a => a.id !== id))
   }
 
   async function remover(id: string) {
-    if (!confirm("Deseja remover este agendamento? O horário será liberado imediatamente.")) return
-    const { error } = await supabase
-      .from('agendamentos')
-      .delete()
-      .eq('id', id)
-
-    if (!error) {
-      setAgendamentos(prev => prev.filter(a => a.id !== id))
-    } else {
-      alert("Erro ao remover: " + error.message)
-    }
+    if (!confirm("Deseja remover este agendamento?")) return
+    const { error } = await supabase.from('agendamentos').delete().eq('id', id)
+    if (!error) setAgendamentos(prev => prev.filter(a => a.id !== id))
   }
 
-  // Define se deve aplicar a margem da sidebar ou centralizar total
   const isRestrito = permissao === 'apenas_agenda'
 
   return (
     <div className="flex min-h-screen bg-card">
       <Sidebar />
 
-      {/* Ajuste dinâmico: Se for restrito, removemos o lg:ml-64 e adicionamos mt-20 para o Header */}
-      <main className={`
-        flex-1 flex flex-col items-center p-4 md:p-8 transition-all duration-300
-        ${isRestrito ? 'ml-0 mt-20' : 'ml-0 lg:ml-64'}
-      `}>
-
+      <main className={`flex-1 flex flex-col items-center p-4 md:p-8 transition-all duration-300 ${isRestrito ? 'ml-0 mt-20' : 'ml-0 lg:ml-64'}`}>
+        
         <div className="w-full max-w-4xl">
-          {/* Header da Agenda */}
-          <header className="flex justify-between items-center mb-8 bg-background p-6 rounded-2xl shadow-sm border border-border mt-12 lg:mt-0">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 bg-background p-6 rounded-2xl shadow-sm border border-border mt-12 lg:mt-0 gap-4">
             <div>
               <h1 className="text-2xl font-black text-foreground uppercase tracking-tighter">Agenda do Dia</h1>
-              <p className="text-gray-500 text-sm">Gerencie os atendimentos</p>
+              <p className="text-gray-500 text-sm">Olá, {permissao === 'completo' ? 'Administrador' : 'Atendente'}</p>
             </div>
+
+            {/* --- FILTRO DE ATENDENTES (Visível apenas para Master) --- */}
+            {!isRestrito && (
+              <div className="w-full md:w-auto">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Filtrar por Profissional</label>
+                <select 
+                  value={filtroAtendente}
+                  onChange={(e) => setFiltroAtendente(e.target.value)}
+                  className="bg-card border border-border p-2 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary outline-none w-full"
+                >
+                  <option value="todos">Todos os profissionais</option>
+                  {atendentes.map(at => (
+                    <option key={at.id} value={at.id}>{at.nome}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </header>
 
-          {/* Estatísticas */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-background p-4 rounded-xl border border-border shadow-sm">
-              <p className="text-xs text-gray-400 uppercase font-bold">Total de Horários</p>
-              <p className="text-2xl font-black text-foreground">{agendamentos.length}</p>
-            </div>
-            <div className="bg-primary p-4 rounded-xl shadow-sm text-white">
-              <p className="text-xs text-foreground uppercase font-bold opacity-80">Próximo Cliente</p>
-              <p className="text-xl font-bold truncate">
-                {agendamentos[0]?.nome_cliente || "Ninguém"}
-              </p>
-            </div>
-          </div>
-
-          {/* Lista de Agendamentos */}
           <div className="space-y-4">
             {carregando ? (
-              <div className="text-center py-10 text-gray-400">Carregando agenda...</div>
+              <div className="text-center py-10 text-gray-400">Carregando agendamentos...</div>
             ) : agendamentos.length > 0 ? (
               agendamentos.map((ag) => {
                 const data = new Date(ag.data_hora)
-                const dia = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })
                 const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
+                const dia = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })
 
                 return (
                   <div key={ag.id} className="group p-5 bg-background border border-border rounded-2xl shadow-sm hover:bg-hover/10 transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -126,13 +125,20 @@ export default function Admin() {
                       </div>
                       <div>
                         <p className="font-bold text-lg text-foreground leading-tight">{ag.nome_cliente}</p>
-                        <a
-                          href={`https://wa.me/55${ag.telefone_cliente.replace(/\D/g, '')}?text=Olá ${ag.nome_cliente}, confirmo seu horário hoje às ${hora}!`}
-                          target="_blank"
-                          className="text-green-600 text-sm font-semibold flex items-center gap-1 hover:text-green-700 mt-1"
-                        >
-                          <span className="text-lg">📱</span> {ag.telefone_cliente}
-                        </a>
+                        
+                        {/* --- EXIBIÇÃO DO ATENDENTE NO CARD --- */}
+                        <div className="flex flex-col gap-1 mt-1">
+                          <span className="text-[10px] bg-primary/10 text-primary font-black px-2 py-0.5 rounded-md uppercase w-fit">
+                            Profissional: {ag.atendentes?.nome || 'Não definido'}
+                          </span>
+                          <a
+                            href={`https://wa.me/55${ag.telefone_cliente.replace(/\D/g, '')}`}
+                            target="_blank"
+                            className="text-green-600 text-sm font-semibold flex items-center gap-1 hover:underline"
+                          >
+                            📱 {ag.telefone_cliente}
+                          </a>
+                        </div>
                       </div>
                     </div>
 
@@ -143,16 +149,10 @@ export default function Admin() {
                       </div>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => remover(ag.id)}
-                          className="bg-red-500 text-white px-3 py-2 rounded-xl font-bold hover:bg-red-600 transition-all shadow-sm"
-                        >
+                        <button onClick={() => remover(ag.id)} className="bg-red-500 text-white px-3 py-2 rounded-xl font-bold hover:bg-red-600 transition-all">
                           Remover
                         </button>
-                        <button
-                          onClick={() => finalizar(ag.id)}
-                          className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 transition-all shadow-sm"
-                        >
+                        <button onClick={() => finalizar(ag.id)} className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 transition-all">
                           Concluir
                         </button>
                       </div>
@@ -162,7 +162,7 @@ export default function Admin() {
               })
             ) : (
               <div className="bg-background p-12 rounded-2xl border border-dashed border-gray-300 text-center">
-                <p className="text-gray-400 font-medium">Não há agendamentos para hoje.</p>
+                <p className="text-gray-400 font-medium">Nenhum agendamento encontrado para este filtro.</p>
               </div>
             )}
           </div>
