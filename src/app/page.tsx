@@ -332,7 +332,7 @@ export default function Home() {
                 value={dataSelecionada}
                 min={hoje}
                 onChange={(e) => { setDataSelecionada(e.target.value); setHorarioSelecionado(null); }}
-                className="w-full bg-card p-4 border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary outline-none font-bold"
+                className="w-full bg-white p-4 border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary outline-none font-bold h-[60px] appearance-none"
               />
             </div>
 
