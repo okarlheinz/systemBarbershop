@@ -77,3 +77,19 @@ CREATE POLICY "Leitura pública de atendentes" ON atendentes FOR SELECT USING (t
 
 ALTER TABLE configuracoes 
 ADD COLUMN IF NOT EXISTS email_notificacao TEXT;
+
+-- 9. CRIAR TABELA DE PARAMETROS E PRIMEIRO PARAMETRO
+
+-- Criar a tabela de parâmetros
+CREATE TABLE IF NOT EXISTS parametros (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT UNIQUE NOT NULL,
+    descricao TEXT,
+    ativo INTEGER DEFAULT 0, -- 1 para Ativo, 0 para Inativo
+    atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Inserir o primeiro parâmetro (conforme solicitado)
+INSERT INTO parametros (nome, descricao, ativo)
+VALUES ('HORARIOATENDENTE', 'INFORMA SE O HORARIO DE FUNCIONAMENTO SERÁ POR ATENDENTE EM VEZ DE SER POR EMPRESA', 0)
+ON CONFLICT (nome) DO NOTHING;
