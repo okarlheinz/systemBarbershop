@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Settings, Calendar, LogOut, Menu, X, LayoutDashboard, Users } from 'lucide-react'
+import { Settings, Calendar, LogOut, Menu, X, LayoutDashboard, Users, Settings2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export function Sidebar() {
@@ -15,6 +15,9 @@ export function Sidebar() {
     }
     return null
   });
+
+  // AUTENTICAR USUARIO LOGADO PARA A PAGINA DE PARAMETRO
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
     async function inicializar() {
@@ -34,6 +37,7 @@ export function Sidebar() {
         const nivel = atendente?.permissao || 'completo';
         setPermissao(nivel);
         localStorage.setItem('user_permissao', nivel);
+        setUserEmail(user.email ?? null);
       }
     }
     inicializar();
@@ -77,6 +81,8 @@ export function Sidebar() {
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, visible: true },
     { name: 'Atendentes', href: '/admin/equipe', icon: Users, visible: true },
     { name: 'Configuração', href: '/admin/configuracoes', icon: Settings, visible: true },
+    /* Link visível apenas para o e-mail específico */
+    { name: 'Parametros', href: '/parametros', icon: Settings2, onlyAdmin: true }
   ]
 
 
@@ -114,24 +120,31 @@ export function Sidebar() {
           </div>
 
           <nav className="flex-1 space-y-2 font-medium">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center p-3 rounded-xl transition-all ${isActive
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-foreground hover:bg-hover/20 hover:text-primary'
-                    }`}
-                >
-                  <Icon size={22} />
-                  <span className="ml-3">{item.name}</span>
-                </Link>
-              )
-            })}
+            {menuItems.filter(item => {
+                // Se o item exige admin, verifica o e-mail
+                if (item.onlyAdmin) {
+                  return userEmail === 'admin@agendeitu.com.br';
+                }
+                // Se não exige, aparece para todos
+                return true;
+              }).map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`flex items-center p-3 rounded-xl transition-all ${isActive
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-foreground hover:bg-hover/20 hover:text-primary'
+                      }`}
+                  >
+                    <Icon size={22} />
+                    <span className="ml-3">{item.name}</span>
+                  </Link>
+                )
+              })}
           </nav>
 
           <button

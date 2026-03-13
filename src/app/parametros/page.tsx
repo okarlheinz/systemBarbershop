@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { Sidebar } from '@/components/Sidebar'
 
 // 1. Definição da Interface (Isso remove os erros de "p.nome", "p.ativo", etc)
 interface Parametro {
@@ -73,6 +74,7 @@ export default function ParametrosPage() {
 
     return (
         <main className="min-h-screen bg-gray-50 p-4 md:p-12">
+            <Sidebar />
             <div className="max-w-4xl mx-auto">
                 <header className="mb-10">
                     <h1 className="text-3xl font-black text-black tracking-tighter uppercase italic">Configurações de Sistema</h1>
