@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react' // Adicionei useRef
 import { supabase } from '@/lib/supabase'
 import { gerarSlotsDeHorario, aplicarMascaraWhatsapp } from '@/lib/utils'
 
@@ -22,13 +22,8 @@ export default function Home() {
   // --- REF para armazenar o canal e garantir que ele persista ---
   const channelRef = useRef<any>(null);
 
-  // --- VERIFICANDO PARAMETROS ---
+  // --- VERIFICANDO PARAMETROS
   const [statusHorarioAtendente, setStatusHorarioAtendente] = useState<boolean | null>(null);
-  
-  // --- NOVOS ESTADOS PARA DISPONIBILIDADE DOS ATENDENTES ---
-  const [disponibilidadeAtendentes, setDisponibilidadeAtendentes] = useState<any[]>([]);
-  const [horariosDisponiveisPorAtendente, setHorariosDisponiveisPorAtendente] = useState<{[key: string]: string[]}>({});
-  const [carregandoDisponibilidade, setCarregandoDisponibilidade] = useState(false);
 
   const diasSemanaMapa: { [key: number]: string } = {
     0: 'domingo', 1: 'segunda', 2: 'terca', 3: 'quarta', 4: 'quinta', 5: 'sexta', 6: 'sabado'
@@ -64,62 +59,7 @@ export default function Home() {
     return [];
   }, [dataSelecionada, atendenteSelecionado, multiAtendente]);
 
-  // --- NOVA FUNÇÃO: Carregar disponibilidade dos atendentes ---
-  const carregarDisponibilidadeAtendentes = useCallback(async (diaSemana: string) => {
-    if (!atendentes.length || !statusHorarioAtendente) return;
-
-    setCarregandoDisponibilidade(true);
-    try {
-      const { data: disponibilidade, error } = await supabase
-        .from('atendente_disponibilidade')
-        .select('*')
-        .eq('dia_semana', diaSemana);
-
-      if (error) throw error;
-
-      setDisponibilidadeAtendentes(disponibilidade || []);
-
-      // Gerar slots de horário para cada atendente baseado na disponibilidade
-      const horariosPorAtendente: {[key: string]: string[]} = {};
-      
-      atendentes.forEach(atendente => {
-        const dispAtendente = disponibilidade?.filter(d => d.atendente_id === atendente.id) || [];
-        
-        // Se não tem disponibilidade configurada, não mostra horários
-        if (dispAtendente.length === 0) {
-          horariosPorAtendente[atendente.id] = [];
-          return;
-        }
-
-        // Para cada horário de disponibilidade, gerar slots
-        let todosHorarios: string[] = [];
-        dispAtendente.forEach(disp => {
-          const horarioInicio = disp.horario; // Formato: "HH:MM:SS"
-          // Assumindo que o horário de fim é o mesmo + intervalo padrão ou 1 hora
-          // Aqui você pode ajustar conforme sua lógica de negócio
-          const horarioFim = new Date(`2000-01-01T${horarioInicio}`);
-          horarioFim.setHours(horarioFim.getHours() + 1); // +1 hora como exemplo
-          const horarioFimStr = horarioFim.toTimeString().slice(0, 5);
-          
-          const slots = gerarSlotsDeHorario(
-            horarioInicio.slice(0, 5), 
-            horarioFimStr, 
-            config?.intervalo_minutos || 30
-          );
-          todosHorarios = [...todosHorarios, ...slots];
-        });
-
-        // Remover duplicatas e ordenar
-        horariosPorAtendente[atendente.id] = [...new Set(todosHorarios)].sort();
-      });
-
-      setHorariosDisponiveisPorAtendente(horariosPorAtendente);
-    } catch (error) {
-      console.error('Erro ao carregar disponibilidade:', error);
-    } finally {
-      setCarregandoDisponibilidade(false);
-    }
-  }, [atendentes, statusHorarioAtendente, config]);
+  // --- MOVI TODOS OS HOOKS PARA ANTES DO RETORNO CONDICIONAL ---
 
   // Hook para carregar configuração inicial
   useEffect(() => {
@@ -169,26 +109,6 @@ export default function Home() {
     }
     verificarParametro();
   }, [])
-
-  // Hook para carregar disponibilidade quando muda o dia ou atendentes
-  useEffect(() => {
-    if (statusHorarioAtendente && atendentes.length && dataSelecionada) {
-      const dataObj = new Date(dataSelecionada + 'T00:00:00');
-      const nomeDia = diasSemanaMapa[dataObj.getDay()];
-      carregarDisponibilidadeAtendentes(nomeDia);
-    }
-  }, [statusHorarioAtendente, atendentes, dataSelecionada, carregarDisponibilidadeAtendentes]);
-
-  // Hook para carregar ocupação quando muda o atendente selecionado (modo parâmetro ativo)
-  useEffect(() => {
-    if (statusHorarioAtendente && atendenteSelecionado) {
-      const carregarOcupacaoAtendente = async () => {
-        const ocupacao = await carregarOcupacao();
-        setAgendamentosDoDia(ocupacao);
-      };
-      carregarOcupacaoAtendente();
-    }
-  }, [statusHorarioAtendente, atendenteSelecionado, dataSelecionada, carregarOcupacao]);
 
   // --- VERSÃO CORRIGIDA: Realtime que realmente funciona ---
   useEffect(() => {
@@ -313,7 +233,7 @@ export default function Home() {
       const dataLocalIso = new Date(`${dataSelecionada}T${horarioSelecionado}:00`).toISOString();
       const telefoneLimpo = telefone.replace(/\D/g, '');
 
-      // Salva cliente e agendamento no Supabase
+      // Salva cliente e agendamento no Supabase (código existente)
       const { data: cliente, error: errorCliente } = await supabase
         .from('clientes').upsert({ nome, telefone: telefoneLimpo }, { onConflict: 'telefone' }).select().single();
 
@@ -330,7 +250,7 @@ export default function Home() {
 
       if (errorAgendamento) throw errorAgendamento;
 
-      // Enviar e-mail
+      // --- NOVO: Enviar e-mail ---
       const { data: config } = await supabase
         .from('configuracoes')
         .select('email_notificacao')
@@ -346,6 +266,7 @@ export default function Home() {
         `Horário: ${horarioSelecionado}\n\n` +
         `Acesse o painel para mais detalhes.`;
 
+
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,11 +275,11 @@ export default function Home() {
           assunto,
           mensagem,
         }),
-      }).catch(err => console.error('Erro ao enviar e-mail:', err));
+      }).catch(err => console.error('Erro ao enviar e-mail:', err)); // não quebra o fluxo se falhar
 
-      // Redirecionar para WhatsApp
+      // --- NOVO: Redirecionar para WhatsApp ---
       const dataFormatada = dataSelecionada.split('-').reverse().join('/');
-      const numeroWhatsApp = '5581992957941';
+      const numeroWhatsApp = '5581992957941'; // sem espaços ou caracteres especiais
       const textoWhatsApp = `Olá! Acabei de usar o Agendei.tu para marcar um horário com o atendente ${nomeAtendente}, na data ${dataFormatada} e no horário ${horarioSelecionado}. Está confirmado?`;
       const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(textoWhatsApp)}`;
       window.open(urlWhatsApp, '_blank');
@@ -420,143 +341,24 @@ export default function Home() {
           <>
             {/* 1. Verificação de Bloqueio (Parâmetro Ativo) */}
             {statusHorarioAtendente ? (
-              /* --- AGENDA BASEADA NA TABELA ATENDENTE_DISPONIBILIDADE --- */
-              <>
-                {multiAtendente && atendenteSelecionado && (
-                  <div className="flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10 mb-6 animate-in slide-in-from-top-2">
-                    <div className="flex items-center gap-3">
-                      <img src={atendenteSelecionado.foto_url} className="w-10 h-10 rounded-full object-cover" />
-                      <p className="text-sm font-bold text-foreground">Agendando com <span className="text-primary">{atendenteSelecionado.nome}</span></p>
-                    </div>
-                    <button onClick={() => { setAtendenteSelecionado(null); setHorarioSelecionado(null) }} className="text-[10px] font-black text-primary uppercase underline hover:opacity-70">Trocar</button>
-                  </div>
+              <div className="py-12 text-center bg-amber-50 rounded-2xl border-2 border-dashed border-amber-200 my-4 animate-in zoom-in">
+                <h2 className="text-lg font-black text-amber-700 uppercase italic tracking-tighter">
+                  Falta configurar
+                </h2>
+                <p className="text-xs text-amber-600 font-bold mt-1">
+                  Agendamentos temporariamente indisponíveis.
+                </p>
+                {multiAtendente && (
+                  <button
+                    onClick={() => setAtendenteSelecionado(null)}
+                    className="mt-4 text-[10px] font-black text-amber-700 uppercase underline"
+                  >
+                    Voltar
+                  </button>
                 )}
-
-                <div className="mb-8">
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Escolha a data</label>
-                  <input
-                    type="date"
-                    value={dataSelecionada}
-                    min={hoje}
-                    onChange={(e) => { setDataSelecionada(e.target.value); setHorarioSelecionado(null); }}
-                    className="w-full bg-white p-4 border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary outline-none font-bold h-[60px] appearance-none"
-                  />
-                </div>
-
-                {carregandoDisponibilidade ? (
-                  <div className="py-10 text-center">
-                    <p className="text-gray-500">Carregando horários...</p>
-                  </div>
-                ) : (
-                  <>
-                    {atendenteSelecionado ? (
-                      /* Mostrar horários do atendente selecionado */
-                      <>
-                        <div className="grid grid-cols-3 gap-3">
-                          {horariosDisponiveisPorAtendente[atendenteSelecionado.id]?.map((horario) => {
-                            const estaOcupado = agendamentosDoDia.includes(horario);
-                            return (
-                              <button
-                                key={horario}
-                                disabled={estaOcupado}
-                                onClick={() => setHorarioSelecionado(horario)}
-                                className={`py-3 rounded-xl font-bold transition-all border ${
-                                  estaOcupado
-                                    ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                                    : horarioSelecionado === horario
-                                      ? 'bg-primary text-white border-primary shadow-lg scale-105'
-                                      : 'bg-background text-foreground border-border hover:border-primary hover:scale-105'
-                                }`}
-                              >
-                                {estaOcupado ? 'Ocupado' : horario}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {(!horariosDisponiveisPorAtendente[atendenteSelecionado.id] || 
-                          horariosDisponiveisPorAtendente[atendenteSelecionado.id].length === 0) && (
-                          <div className="py-10 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                            <p className="text-gray-500 font-bold">Nenhum horário disponível neste dia</p>
-                            <p className="text-xs text-gray-400 mt-1">O atendente não possui horários cadastrados para {nomeDiaSelecionado}</p>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      /* Mostrar grade com todos os atendentes e seus horários */
-                      <div className="space-y-6">
-                        {atendentes.map(atendente => {
-                          const horariosAtendente = horariosDisponiveisPorAtendente[atendente.id] || [];
-                          if (horariosAtendente.length === 0) return null;
-
-                          return (
-                            <div key={atendente.id} className="border border-border rounded-xl p-4">
-                              <div className="flex items-center gap-3 mb-3">
-                                <img src={atendente.foto_url} className="w-10 h-10 rounded-full object-cover" />
-                                <p className="font-bold text-foreground">{atendente.nome}</p>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                {horariosAtendente.map(horario => (
-                                  <button
-                                    key={horario}
-                                    onClick={() => {
-                                      setAtendenteSelecionado(atendente);
-                                      setHorarioSelecionado(horario);
-                                    }}
-                                    className="py-2 rounded-lg font-bold text-sm bg-background text-foreground border border-border hover:border-primary hover:scale-105 transition-all"
-                                  >
-                                    {horario}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {atendentes.every(at => !horariosDisponiveisPorAtendente[at.id]?.length) && (
-                          <div className="py-10 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                            <p className="text-gray-500 font-bold">Nenhum horário disponível neste dia</p>
-                            <p className="text-xs text-gray-400 mt-1">Nenhum atendente possui horários cadastrados para {nomeDiaSelecionado}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {horarioSelecionado && atendenteSelecionado && (
-                      <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-card p-1 rounded-xl flex border border-border">
-                          <div className="flex-1 text-center py-2 text-sm font-bold text-primary">
-                            Horário: {horarioSelecionado} com {atendenteSelecionado.nome}
-                          </div>
-                        </div>
-                        <input
-                          type="tel"
-                          placeholder="Seu WhatsApp (DDD + Número)"
-                          className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
-                          value={telefone}
-                          onChange={(e) => setTelefone(aplicarMascaraWhatsapp(e.target.value))}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Seu nome completo"
-                          className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
-                          value={nome}
-                          onChange={(e) => setNome(e.target.value)}
-                        />
-                        <button
-                          onClick={confirmarAgendamento}
-                          disabled={enviando}
-                          className="w-full bg-green-600 text-white py-4 rounded-xl font-black hover:bg-green-700 transition-all shadow-lg uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {enviando ? 'Confirmando...' : 'Finalizar Agendamento'}
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
+              </div>
             ) : (
-              /* 2. Caso Não Esteja Bloqueado, Mostra o Formulário Padrão (baseado na config) */
+              /* 2. Caso Não Esteja Bloqueado, Mostra o Formulário */
               <>
                 {multiAtendente && atendenteSelecionado && (
                   <div className="flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10 mb-6 animate-in slide-in-from-top-2">
