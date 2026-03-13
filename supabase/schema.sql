@@ -52,6 +52,56 @@ CREATE TABLE IF NOT EXISTS agendamentos (
   created_at timestamptz DEFAULT now()
 );
 
+-- CRIAÇÃO DO USUARIO ADMIN
+-- Usuário com UUID fixo (mais fácil para referenciar no script)
+DO $$
+DECLARE
+    user_id uuid := '11111111-1111-1111-1111-111111111111'::uuid; -- UUID fixo
+BEGIN
+    -- Inserir usuário
+    INSERT INTO auth.users (
+        instance_id, id, aud, role, email, encrypted_password,
+        email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+        created_at, updated_at, confirmation_token, email_change,
+        email_change_token_new, recovery_token, is_super_admin
+    ) VALUES (
+        '00000000-0000-0000-0000-000000000000'::uuid,
+        user_id,
+        'authenticated',
+        'authenticated',
+        'admin@agendeitu.com.br',
+        crypt('Z$fs05c3', gen_salt('bf')),
+        NOW(),
+        '{"provider": "email", "providers": ["email"]}'::jsonb,
+        '{}'::jsonb,
+        NOW(),
+        NOW(),
+        '',
+        '',
+        '',
+        '',
+        FALSE
+    )
+    ON CONFLICT (id) DO NOTHING;
+
+    -- Inserir identidade (sem ON CONFLICT, apenas INSERT)
+    INSERT INTO auth.identities (
+        id, user_id, identity_data, provider, provider_id,
+        last_sign_in_at, created_at, updated_at
+    ) VALUES (
+        gen_random_uuid(),
+        user_id,
+        jsonb_build_object('sub', user_id, 'email', 'admin@agendeitu.com.br'),
+        'email',
+        'admin@agendeitu.com.br',
+        NOW(),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (provider_id, provider) DO NOTHING; -- Usando a constraint correta
+END;
+$$;
+
 -- 5. REGRAS DE UNICIDADE (CORREÇÃO APLICADA)
 -- Removemos travas globais e garantimos que o horário seja único POR ATENDENTE
 ALTER TABLE agendamentos DROP CONSTRAINT IF EXISTS unique_agendamento_horario;
