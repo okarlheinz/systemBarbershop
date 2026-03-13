@@ -38,6 +38,10 @@ export default function GestaoEquipe() {
     const temNumero = /[0-9]/.test(senha)
     const senhasConferem = senha === confirmarSenha && senha !== ''
 
+    // Buscar parametros
+    const [statusHorarioAtendente, setStatusHorarioAtendente] = useState<boolean | null>(null);
+
+
     useEffect(() => {
         carregarEquipe();
         carregarConfiguracoes();
@@ -209,6 +213,23 @@ export default function GestaoEquipe() {
         setAbaAtiva('dados')
     }
 
+    useEffect(() => {
+        async function verificarParametro() {
+            const { data, error } = await supabase
+                .from('parametros')
+                .select('ativo')
+                .eq('nome', 'HORARIOATENDENTE')
+                .single();
+
+            if (!error && data) {
+                setStatusHorarioAtendente(data.ativo === 1)
+            } else {
+                console.error('Erro ao buscar parâmetro:', error);
+            }
+        }
+        verificarParametro();
+    }, [])
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <Sidebar />
@@ -308,6 +329,8 @@ export default function GestaoEquipe() {
                                 <h2 className="text-xl font-black mb-6 uppercase tracking-tight">{editando ? 'Editar Cadastro' : 'Novo Atendente'}</h2>
 
                                 {/* NAVEGAÇÃO POR ABAS NO MODAL */}
+                                {statusHorarioAtendente ? (
+
                                 <div className="flex gap-4 mb-6 border-b border-border">
                                     <button
                                         onClick={() => setAbaAtiva('dados')}
@@ -322,6 +345,8 @@ export default function GestaoEquipe() {
                                         Horários
                                     </button>
                                 </div>
+
+                                ) : null}
 
                                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                                     {abaAtiva === 'dados' ? (

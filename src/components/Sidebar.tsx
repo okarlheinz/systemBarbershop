@@ -30,7 +30,7 @@ export function Sidebar() {
           .select('permissao')
           .eq('auth_user_id', user.id)
           .single();
-        
+
         const nivel = atendente?.permissao || 'completo';
         setPermissao(nivel);
         localStorage.setItem('user_permissao', nivel);
@@ -60,8 +60,8 @@ export function Sidebar() {
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Minha Agenda</span>
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-2 text-red-500 font-bold text-xs hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
         >
@@ -78,6 +78,7 @@ export function Sidebar() {
     { name: 'Atendentes', href: '/admin/equipe', icon: Users, visible: true },
     { name: 'Configuração', href: '/admin/configuracoes', icon: Settings, visible: true },
   ]
+
 
   return (
     <>
