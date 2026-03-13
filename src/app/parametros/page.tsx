@@ -2,14 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation' // <--- Importe o roteador
+import { useRouter } from 'next/navigation'
+
+// 1. Definição da Interface (Isso remove os erros de "p.nome", "p.ativo", etc)
+interface Parametro {
+    id: number;
+    nome: string;
+    descricao: string;
+    ativo: number; // 1 para ativo, 0 para inativo
+}
 
 export default function ParametrosPage() {
-    const [parametros, setParametros] = useState([])
-    const [busca, setBusca] = useState('')
-    const [filtroStatus, setFiltroStatus] = useState('todos')
-    const [carregando, setCarregando] = useState(true)
-    const router = useRouter() // <--- Inicialize o roteador
+    // 2. Tipagem dos Estados
+    const [parametros, setParametros] = useState<Parametro[]>([]) // Define que é um array de Parametros
+    const [busca, setBusca] = useState<string>('')
+    const [filtroStatus, setFiltroStatus] = useState<string>('todos')
+    const [carregando, setCarregando] = useState<boolean>(true)
+    const router = useRouter()
 
     useEffect(() => {
         checkUser()
@@ -18,13 +27,11 @@ export default function ParametrosPage() {
     async function checkUser() {
         const { data: { session } } = await supabase.auth.getSession()
 
-        // Se não tiver sessão (não está logado), manda para o login
         if (!session) {
-            router.push('/login') // Ou a rota exata da sua tela de login
+            router.push('/login')
             return
         }
 
-        // Se estiver logado, carrega os parâmetros normalmente
         carregarParametros()
     }
 
@@ -35,12 +42,15 @@ export default function ParametrosPage() {
             .select('*')
             .order('nome', { ascending: true })
 
-        if (!error) setParametros(data)
+        // 3. Cast de tipo para garantir que o TS entenda o retorno do Supabase
+        if (!error && data) {
+            setParametros(data as Parametro[])
+        }
         setCarregando(false)
     }
 
-    // Lógica de Filtro em tempo real
-    const parametrosFiltrados = parametros.filter(p => {
+    // Lógica de Filtro Tipada
+    const parametrosFiltrados = parametros.filter((p: Parametro) => {
         const correspondeBusca =
             p.nome.toLowerCase().includes(busca.toLowerCase()) ||
             p.descricao.toLowerCase().includes(busca.toLowerCase())
@@ -50,7 +60,8 @@ export default function ParametrosPage() {
         return correspondeBusca
     })
 
-    async function alternarStatus(id, statusAtual) {
+    // 4. Tipagem dos parâmetros da função
+    async function alternarStatus(id: number, statusAtual: number) {
         const novoStatus = statusAtual === 1 ? 0 : 1
         const { error } = await supabase
             .from('parametros')
@@ -73,12 +84,12 @@ export default function ParametrosPage() {
                     <input
                         type="text"
                         placeholder="Pesquisar por nome ou descrição..."
-                        className="flex-1 p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black"
+                        className="flex-1 p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black text-black"
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
                     />
                     <select
-                        className="p-4 bg-white border border-gray-200 rounded-2xl outline-none font-bold text-sm"
+                        className="p-4 bg-white border border-gray-200 rounded-2xl outline-none font-bold text-sm text-black"
                         value={filtroStatus}
                         onChange={(e) => setFiltroStatus(e.target.value)}
                     >
@@ -93,11 +104,11 @@ export default function ParametrosPage() {
                     {carregando ? (
                         <p className="text-center py-10 text-gray-400 font-bold">Carregando parâmetros...</p>
                     ) : parametrosFiltrados.length > 0 ? (
-                        parametrosFiltrados.map(param => (
+                        parametrosFiltrados.map((param: Parametro) => (
                             <div key={param.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
                                 <div className="flex-1 pr-4">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="font-black text-lg tracking-tight">{param.nome}</h3>
+                                        <h3 className="font-black text-lg tracking-tight text-black">{param.nome}</h3>
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${param.ativo === 1 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                             {param.ativo === 1 ? 'Ativo' : 'Inativo'}
                                         </span>
