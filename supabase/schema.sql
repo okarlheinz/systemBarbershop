@@ -80,7 +80,7 @@ ADD COLUMN IF NOT EXISTS email_notificacao TEXT;
 
 -- 9. CRIAR TABELA DE PARAMETROS E PRIMEIRO PARAMETRO
 
--- Criar a tabela de parâmetros
+-- 10. Criar a tabela de parâmetros
 CREATE TABLE IF NOT EXISTS parametros (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome TEXT UNIQUE NOT NULL,
@@ -89,7 +89,16 @@ CREATE TABLE IF NOT EXISTS parametros (
     atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Inserir o primeiro parâmetro (conforme solicitado)
+-- 11. Inserir o primeiro parâmetro (conforme solicitado)
 INSERT INTO parametros (nome, descricao, ativo)
 VALUES ('HORARIOATENDENTE', 'INFORMA SE O HORARIO DE FUNCIONAMENTO SERÁ POR ATENDENTE EM VEZ DE SER POR EMPRESA', 0)
 ON CONFLICT (nome) DO NOTHING;
+
+-- 12. FUncionamento do parâmetro HORARIOATENDENTE
+CREATE TABLE IF NOT EXISTS atendente_disponibilidade (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    atendente_id UUID REFERENCES atendentes(id) ON DELETE CASCADE,
+    dia_semana TEXT NOT NULL, -- 'segunda', 'terca', etc.
+    horario TIME NOT NULL,
+    UNIQUE(atendente_id, dia_semana, horario)
+);
