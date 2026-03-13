@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback, useRef } from 'react' // Adicionei us
 import { supabase } from '@/lib/supabase'
 import { gerarSlotsDeHorario, aplicarMascaraWhatsapp } from '@/lib/utils'
 
-
 export default function Home() {
   const [config, setConfig] = useState<any>(null)
   const [montado, setMontado] = useState(false)
@@ -23,15 +22,12 @@ export default function Home() {
   // --- REF para armazenar o canal e garantir que ele persista ---
   const channelRef = useRef<any>(null);
 
+  // --- VERIFICANDO PARAMETROS
+  const [statusHorarioAtendente, setStatusHorarioAtendente] = useState<boolean | null>(null);
+
   const diasSemanaMapa: { [key: number]: string } = {
     0: 'domingo', 1: 'segunda', 2: 'terca', 3: 'quarta', 4: 'quinta', 5: 'sexta', 6: 'sabado'
   };
-
-  const dataObjeto = new Date(dataSelecionada + 'T00:00:00');
-  const nomeDiaSelecionado = diasSemanaMapa[dataObjeto.getDay()];
-  const isDiaDeTrabalho = config?.dias_trabalho?.includes(nomeDiaSelecionado);
-
-
 
   // --- Função para carregar ocupação (useCallback para evitar recriações) ---
   const carregarOcupacao = useCallback(async () => {
@@ -63,6 +59,9 @@ export default function Home() {
     return [];
   }, [dataSelecionada, atendenteSelecionado, multiAtendente]);
 
+  // --- MOVI TODOS OS HOOKS PARA ANTES DO RETORNO CONDICIONAL ---
+
+  // Hook para carregar configuração inicial
   useEffect(() => {
     async function carregarConfig() {
       const { data: configData } = await supabase.from('configuracoes').select('*').single();
@@ -81,6 +80,7 @@ export default function Home() {
     carregarConfig();
   }, []);
 
+  // Hook para buscar cliente por telefone
   useEffect(() => {
     const telefoneLimpo = telefone.replace(/\D/g, '');
     if (telefoneLimpo.length === 11) {
@@ -90,7 +90,25 @@ export default function Home() {
       };
       buscarCliente();
     }
-  }, [telefone]);
+  }, [telefone, nome]);
+
+  // Hook para verificar parâmetro HORARIOATENDENTE
+  useEffect(() => {
+    async function verificarParametro() {
+      const { data, error } = await supabase
+        .from('parametros')
+        .select('ativo')
+        .eq('nome', 'HORARIOATENDENTE')
+        .single();
+
+      if (!error && data) {
+        setStatusHorarioAtendente(data.ativo === 1)
+      } else {
+        console.error('Erro ao buscar parâmetro:', error);
+      }
+    }
+    verificarParametro();
+  }, [])
 
   // --- VERSÃO CORRIGIDA: Realtime que realmente funciona ---
   useEffect(() => {
@@ -184,7 +202,12 @@ export default function Home() {
     };
   }, [dataSelecionada, atendenteSelecionado, multiAtendente, carregarOcupacao, horarioSelecionado]);
 
+  // --- AGORA SIM, RETORNO CONDICIONAL DEPOIS DE TODOS OS HOOKS ---
   if (!montado || !config) return <div className="min-h-screen flex items-center justify-center bg-card text-foreground">Carregando...</div>
+
+  const dataObjeto = new Date(dataSelecionada + 'T00:00:00');
+  const nomeDiaSelecionado = diasSemanaMapa[dataObjeto.getDay()];
+  const isDiaDeTrabalho = config?.dias_trabalho?.includes(nomeDiaSelecionado);
 
   const horariosDisponiveis = gerarSlotsDeHorario(config.horario_abertura, config.horario_fechamento, config.intervalo_minutos);
   const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
@@ -314,87 +337,111 @@ export default function Home() {
             </div>
           </div>
         ) : (
+          /* --- BLOCO DE AGENDAMENTO OU AVISO --- */
           <>
-            {multiAtendente && atendenteSelecionado && (
-              <div className="flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10 mb-6 animate-in slide-in-from-top-2">
-                <div className="flex items-center gap-3">
-                  <img src={atendenteSelecionado.foto_url} className="w-10 h-10 rounded-full object-cover" />
-                  <p className="text-sm font-bold text-foreground">Agendando com <span className="text-primary">{atendenteSelecionado.nome}</span></p>
-                </div>
-                <button onClick={() => { setAtendenteSelecionado(null); setHorarioSelecionado(null) }} className="text-[10px] font-black text-primary uppercase underline hover:opacity-70">Trocar</button>
+            {/* 1. Verificação de Bloqueio (Parâmetro Ativo) */}
+            {statusHorarioAtendente ? (
+              <div className="py-12 text-center bg-amber-50 rounded-2xl border-2 border-dashed border-amber-200 my-4 animate-in zoom-in">
+                <h2 className="text-lg font-black text-amber-700 uppercase italic tracking-tighter">
+                  Falta configurar
+                </h2>
+                <p className="text-xs text-amber-600 font-bold mt-1">
+                  Agendamentos temporariamente indisponíveis.
+                </p>
+                {multiAtendente && (
+                  <button
+                    onClick={() => setAtendenteSelecionado(null)}
+                    className="mt-4 text-[10px] font-black text-amber-700 uppercase underline"
+                  >
+                    Voltar
+                  </button>
+                )}
               </div>
-            )}
-
-            <div className="mb-8">
-              <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Escolha a data</label>
-              <input
-                type="date"
-                value={dataSelecionada}
-                min={hoje}
-                onChange={(e) => { setDataSelecionada(e.target.value); setHorarioSelecionado(null); }}
-                className="w-full bg-white p-4 border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary outline-none font-bold h-[60px] appearance-none"
-              />
-            </div>
-
-            {isDiaDeTrabalho ? (
+            ) : (
+              /* 2. Caso Não Esteja Bloqueado, Mostra o Formulário */
               <>
-                <div className="grid grid-cols-3 gap-3">
-                  {horariosFiltrados.map((horario) => {
-                    const estaOcupado = agendamentosDoDia.includes(horario);
-                    return (
-                      <button
-                        key={horario}
-                        disabled={estaOcupado}
-                        onClick={() => setHorarioSelecionado(horario)}
-                        className={`py-3 rounded-xl font-bold transition-all border ${estaOcupado
-                          ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                          : horarioSelecionado === horario
-                            ? 'bg-primary text-white border-primary shadow-lg scale-105'
-                            : 'bg-background text-foreground border-border hover:border-primary hover:scale-105'
-                          }`}
-                      >
-                        {estaOcupado ? 'Ocupado' : horario}
-                      </button>
-                    );
-                  })}
+                {multiAtendente && atendenteSelecionado && (
+                  <div className="flex items-center justify-between bg-primary/5 p-3 rounded-xl border border-primary/10 mb-6 animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3">
+                      <img src={atendenteSelecionado.foto_url} className="w-10 h-10 rounded-full object-cover" />
+                      <p className="text-sm font-bold text-foreground">Agendando com <span className="text-primary">{atendenteSelecionado.nome}</span></p>
+                    </div>
+                    <button onClick={() => { setAtendenteSelecionado(null); setHorarioSelecionado(null) }} className="text-[10px] font-black text-primary uppercase underline hover:opacity-70">Trocar</button>
+                  </div>
+                )}
+
+                <div className="mb-8">
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Escolha a data</label>
+                  <input
+                    type="date"
+                    value={dataSelecionada}
+                    min={hoje}
+                    onChange={(e) => { setDataSelecionada(e.target.value); setHorarioSelecionado(null); }}
+                    className="w-full bg-white p-4 border border-border rounded-xl text-foreground focus:ring-2 focus:ring-primary outline-none font-bold h-[60px] appearance-none"
+                  />
                 </div>
 
-                {horarioSelecionado && (
-                  <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-card p-1 rounded-xl flex border border-border">
-                      <div className="flex-1 text-center py-2 text-sm font-bold text-primary">
-                        Horário: {horarioSelecionado}
-                      </div>
+                {isDiaDeTrabalho ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      {horariosFiltrados.map((horario) => {
+                        const estaOcupado = agendamentosDoDia.includes(horario);
+                        return (
+                          <button
+                            key={horario}
+                            disabled={estaOcupado}
+                            onClick={() => setHorarioSelecionado(horario)}
+                            className={`py-3 rounded-xl font-bold transition-all border ${estaOcupado
+                              ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                              : horarioSelecionado === horario
+                                ? 'bg-primary text-white border-primary shadow-lg scale-105'
+                                : 'bg-background text-foreground border-border hover:border-primary hover:scale-105'
+                              }`}
+                          >
+                            {estaOcupado ? 'Ocupado' : horario}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <input
-                      type="tel"
-                      placeholder="Seu WhatsApp (DDD + Número)"
-                      className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
-                      value={telefone}
-                      onChange={(e) => setTelefone(aplicarMascaraWhatsapp(e.target.value))}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Seu nome completo"
-                      className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                    />
-                    <button
-                      onClick={confirmarAgendamento}
-                      disabled={enviando}
-                      className="w-full bg-green-600 text-white py-4 rounded-xl font-black hover:bg-green-700 transition-all shadow-lg uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {enviando ? 'Confirmando...' : 'Finalizar Agendamento'}
-                    </button>
+
+                    {horarioSelecionado && (
+                      <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-card p-1 rounded-xl flex border border-border">
+                          <div className="flex-1 text-center py-2 text-sm font-bold text-primary">
+                            Horário: {horarioSelecionado}
+                          </div>
+                        </div>
+                        <input
+                          type="tel"
+                          placeholder="Seu WhatsApp (DDD + Número)"
+                          className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
+                          value={telefone}
+                          onChange={(e) => setTelefone(aplicarMascaraWhatsapp(e.target.value))}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Seu nome completo"
+                          className="w-full p-4 bg-white border border-border rounded-xl text-black focus:ring-2 focus:ring-primary outline-none"
+                          value={nome}
+                          onChange={(e) => setNome(e.target.value)}
+                        />
+                        <button
+                          onClick={confirmarAgendamento}
+                          disabled={enviando}
+                          className="w-full bg-green-600 text-white py-4 rounded-xl font-black hover:bg-green-700 transition-all shadow-lg uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {enviando ? 'Confirmando...' : 'Finalizar Agendamento'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-10 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                    <p className="text-gray-500 font-bold">Infelizmente não atendemos neste dia.</p>
+                    <p className="text-xs text-gray-400 mt-1">Por favor, escolha outra data acima.</p>
                   </div>
                 )}
               </>
-            ) : (
-              <div className="py-10 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                <p className="text-gray-500 font-bold">Infelizmente não atendemos neste dia.</p>
-                <p className="text-xs text-gray-400 mt-1">Por favor, escolha outra data acima.</p>
-              </div>
             )}
           </>
         )}
