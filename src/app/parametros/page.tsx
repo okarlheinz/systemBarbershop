@@ -5,17 +5,15 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Sidebar } from '@/components/Sidebar'
 
-// 1. Definição da Interface (Isso remove os erros de "p.nome", "p.ativo", etc)
 interface Parametro {
     id: number;
     nome: string;
     descricao: string;
-    ativo: number; // 1 para ativo, 0 para inativo
+    ativo: number; 
 }
 
 export default function ParametrosPage() {
-    // 2. Tipagem dos Estados
-    const [parametros, setParametros] = useState<Parametro[]>([]) // Define que é um array de Parametros
+    const [parametros, setParametros] = useState<Parametro[]>([])
     const [busca, setBusca] = useState<string>('')
     const [filtroStatus, setFiltroStatus] = useState<string>('todos')
     const [carregando, setCarregando] = useState<boolean>(true)
@@ -27,12 +25,10 @@ export default function ParametrosPage() {
 
     async function checkUser() {
         const { data: { session } } = await supabase.auth.getSession()
-
         if (!session) {
             router.push('/login')
             return
         }
-
         carregarParametros()
     }
 
@@ -43,14 +39,12 @@ export default function ParametrosPage() {
             .select('*')
             .order('nome', { ascending: true })
 
-        // 3. Cast de tipo para garantir que o TS entenda o retorno do Supabase
         if (!error && data) {
             setParametros(data as Parametro[])
         }
         setCarregando(false)
     }
 
-    // Lógica de Filtro Tipada
     const parametrosFiltrados = parametros.filter((p: Parametro) => {
         const correspondeBusca =
             p.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -61,7 +55,6 @@ export default function ParametrosPage() {
         return correspondeBusca
     })
 
-    // 4. Tipagem dos parâmetros da função
     async function alternarStatus(id: number, statusAtual: number) {
         const novoStatus = statusAtual === 1 ? 0 : 1
         const { error } = await supabase
@@ -73,73 +66,73 @@ export default function ParametrosPage() {
     }
 
     return (
-        <main className="min-h-screen bg-gray-50 p-4 md:p-12">
+        // Adicionado o container flex e bg-card para padronizar com as outras telas
+        <div className="flex min-h-screen bg-card">
             <Sidebar />
-            <div className="max-w-4xl mx-auto">
-                <header className="mb-10">
-                    <h1 className="text-3xl font-black text-black tracking-tighter uppercase italic">Configurações de Sistema</h1>
-                    <p className="text-gray-500 font-medium">Controle de Parâmetros e Funcionalidades</p>
-                </header>
+            
+            {/* Margem dinâmica para não ficar por baixo da sidebar no desktop e dar espaço ao menu no mobile */}
+            <main className="flex-1 p-4 md:p-8 lg:ml-64 mt-16 lg:mt-0 transition-all">
+                <div className="max-w-4xl mx-auto">
+                    <header className="mb-10 bg-background p-6 rounded-2xl shadow-sm border border-border">
+                        <h1 className="text-3xl font-black text-black tracking-tighter uppercase italic">Configurações</h1>
+                        <p className="text-gray-500 font-medium text-sm">Controle de Parâmetros e Funcionalidades</p>
+                    </header>
 
-                {/* --- BARRA DE BUSCA E FILTROS --- */}
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
-                    <input
-                        type="text"
-                        placeholder="Pesquisar por nome ou descrição..."
-                        className="flex-1 p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black text-black"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                    />
-                    <select
-                        className="p-4 bg-white border border-gray-200 rounded-2xl outline-none font-bold text-sm text-black"
-                        value={filtroStatus}
-                        onChange={(e) => setFiltroStatus(e.target.value)}
-                    >
-                        <option value="todos">Todos os Status</option>
-                        <option value="ativos">Apenas Ativos</option>
-                        <option value="inativos">Apenas Inativos</option>
-                    </select>
-                </div>
+                    <div className="flex flex-col md:flex-row gap-4 mb-8">
+                        <input
+                            type="text"
+                            placeholder="Pesquisar..."
+                            className="flex-1 p-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-black text-black"
+                            value={busca}
+                            onChange={(e) => setBusca(e.target.value)}
+                        />
+                        <select
+                            className="p-4 bg-white border border-gray-200 rounded-2xl outline-none font-bold text-sm text-black"
+                            value={filtroStatus}
+                            onChange={(e) => setFiltroStatus(e.target.value)}
+                        >
+                            <option value="todos">Todos os Status</option>
+                            <option value="ativos">Ativos</option>
+                            <option value="inativos">Inativos</option>
+                        </select>
+                    </div>
 
-                {/* --- LISTAGEM --- */}
-                <div className="space-y-4">
-                    {carregando ? (
-                        <p className="text-center py-10 text-gray-400 font-bold">Carregando parâmetros...</p>
-                    ) : parametrosFiltrados.length > 0 ? (
-                        parametrosFiltrados.map((param: Parametro) => (
-                            <div key={param.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-                                <div className="flex-1 pr-4">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="font-black text-lg tracking-tight text-black">{param.nome}</h3>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${param.ativo === 1 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                            {param.ativo === 1 ? 'Ativo' : 'Inativo'}
-                                        </span>
+                    <div className="space-y-4">
+                        {carregando ? (
+                            <p className="text-center py-10 text-gray-400 font-bold italic">Carregando...</p>
+                        ) : parametrosFiltrados.length > 0 ? (
+                            parametrosFiltrados.map((param: Parametro) => (
+                                <div key={param.id} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:shadow-md transition-all">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="font-black text-lg tracking-tight text-black">{param.nome}</h3>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${param.ativo === 1 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                                {param.ativo === 1 ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 font-medium leading-relaxed">{param.descricao}</p>
                                     </div>
-                                    <p className="text-sm text-gray-500 font-medium leading-relaxed">{param.descricao}</p>
+
+                                    {/* Botão ajustado com flex-shrink-0 para não esmagar */}
+                                    <button
+                                        onClick={() => alternarStatus(param.id, param.ativo)}
+                                        className={`sm:w-auto w-full px-6 py-3 rounded-2xl font-black text-xs uppercase transition-all active:scale-95 flex-shrink-0 ${param.ativo === 1
+                                                ? 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'
+                                                : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                                            }`}
+                                    >
+                                        {param.ativo === 1 ? 'Desativar' : 'Ativar'}
+                                    </button>
                                 </div>
-
-                                <button
-                                    onClick={() => alternarStatus(param.id, param.ativo)}
-                                    className={`px-6 py-3 rounded-2xl font-black text-xs uppercase transition-all active:scale-95 ${param.ativo === 1
-                                            ? 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'
-                                            : 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
-                                        }`}
-                                >
-                                    {param.ativo === 1 ? 'Desativar' : 'Ativar'}
-                                </button>
+                            ))
+                        ) : (
+                            <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+                                <p className="text-gray-400 font-bold italic">Nenhum parâmetro encontrado.</p>
                             </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
-                            <p className="text-gray-400 font-bold italic">Nenhum parâmetro encontrado.</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-
-                <footer className="mt-12 text-center">
-                    <p className="text-[10px] font-black text-gray-300 tracking-[0.3em] uppercase">Agendei.tu - Parâmetros Internos</p>
-                </footer>
-            </div>
-        </main>
+            </main>
+        </div>
     )
 }
